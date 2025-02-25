@@ -8,9 +8,12 @@ import eu.ace_design.island.bot.IExplorerRaid;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
+import ca.mcmaster.se2aa4.island.teamXXX.DroneDecisions.*;
+
 public class Explorer implements IExplorerRaid {
 
     private final Logger logger = LogManager.getLogger();
+    private int testCounter;
 
     @Override
     public void initialize(String s) {
@@ -26,8 +29,20 @@ public class Explorer implements IExplorerRaid {
     @Override
     public String takeDecision() {
         JSONObject decision = new JSONObject();
-        decision.put("action", "stop"); // we stop the exploration immediately
-        logger.info("** Decision: {}",decision.toString());
+
+        /*need to find a better way to determine when the drone should turn or scan
+        Currently when the fly action is called in this takeDecision() method it will keep looping until stop action is called 
+        For now we stop the mission when the drone has flown 5 times
+        */
+        if (this.testCounter == 5){
+            Decision droneStop = new Stop();
+            decision = droneStop.action();
+        } else{
+            Decision droneFly = new Fly();
+            decision = droneFly.action();
+        }
+        this.testCounter += 1;
+
         return decision.toString();
     }
 
