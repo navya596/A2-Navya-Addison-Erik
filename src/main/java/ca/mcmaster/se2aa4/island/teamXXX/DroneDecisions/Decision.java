@@ -4,4 +4,5 @@ import org.json.JSONObject;
 
 public interface Decision {
     public JSONObject action();
+    public void handle();
 }

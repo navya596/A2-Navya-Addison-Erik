@@ -14,4 +14,8 @@ public class Scan implements Decision{
         logger.info("** Decision: {}",decision.toString());
         return decision;
     }
+
+    public void handle() {
+        
+    }
 }
