@@ -154,11 +154,13 @@ public class Controller {
 
             //if current direction is same as previous echo direction in previousAction
             if (drone.getHeading().equals(parameters.getString("direction")) ) {
-                //if range of previous echo direction was not <= 2 ie its not close enough (this is just an estimation) in previousResult
-                    //fly
-                //if range of previous echo direction was <= 2 ie close enough 
-                    //scan ground 
-                return commands.get("fly");
+                if (Integer.parseInt(parameters.getString("range")) <= 2 ) { //if range of previous echo direction was <= 2 ie close enough 
+                    return commands.get("stop"); //stop and return to base (only for the mvp) 
+                }
+                else { //if range of previous echo direction was not <= 2 ie its not close enough (this is just an estimation) in previousResult
+                    return commands.get("fly");
+                }                    
+                
             }
             else { //change heading to that direction 
                 // Determine if previous echo was done on respective left or right
@@ -188,11 +190,6 @@ public class Controller {
         } 
             
         return null;
-            
-        
-        
-
-
 
     }
 
