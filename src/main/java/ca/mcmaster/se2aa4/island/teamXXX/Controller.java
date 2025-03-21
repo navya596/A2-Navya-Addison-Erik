@@ -1,15 +1,12 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
 import java.util.HashMap;
-import java.util.Map;
-
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
-
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.json.JSONObject;
 
 public class Controller {
@@ -63,20 +60,20 @@ public class Controller {
     //getRespectiveDirections() gets drone's current heading and sets its respective front, left, and right directions
     public void getRespectiveDirections() {
         front = this.drone.getHeading();
-        if ("E".equals(front)) {
+        if ("EAST".equals(front)) {
             this.front = "E";
             this.left = "N";
             this.right = "S";
             
-        } else if ("S".equals(front)) {
+        } else if ("SOUTH".equals(front)) {
             this.front = "S";
             this.left = "E";
             this.right = "W";
-        } else if ("W".equals(front)) {
+        } else if ("WEST".equals(front)) {
             this.front = "W";
             this.left = "S";
             this.right = "N";
-        } else if ("N".equals(front)) {
+        } else if ("NORTH".equals(front)) {
             this.front = "N";
             this.left = "W";
             this.right = "E";
