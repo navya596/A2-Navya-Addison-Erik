@@ -60,20 +60,20 @@ public class Controller {
     //getRespectiveDirections() gets drone's current heading and sets its respective front, left, and right directions
     public void getRespectiveDirections() {
         front = this.drone.getHeading();
-        if ("EAST".equals(front)) {
+        if ("E".equals(front)) {
             this.front = "E";
             this.left = "N";
             this.right = "S";
             
-        } else if ("SOUTH".equals(front)) {
+        } else if ("S".equals(front)) {
             this.front = "S";
             this.left = "E";
             this.right = "W";
-        } else if ("WEST".equals(front)) {
+        } else if ("W".equals(front)) {
             this.front = "W";
             this.left = "S";
             this.right = "N";
-        } else if ("NORTH".equals(front)) {
+        } else if ("N".equals(front)) {
             this.front = "N";
             this.left = "W";
             this.right = "E";
