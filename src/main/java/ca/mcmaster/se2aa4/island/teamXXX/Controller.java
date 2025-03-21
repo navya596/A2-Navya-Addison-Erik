@@ -1,21 +1,25 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 public class Controller {
     //attributes
     private Drone drone; 
     private String pastState; //need a past state verifying to get to an island
     private Navigator navigator; 
-    private String[] currentState = new String[2];
     private JSONObject decision = new JSONObject();
     private Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
     private String front;
     private String left;
     private String right;
+    private final Logger logger = LogManager.getLogger();
 
     //Constructor
     public Controller(Drone drone) {
@@ -27,13 +31,6 @@ public class Controller {
 
         
 
-    }
-
-    //getCurrentstate returns String[] where first index is battery and second index is heading
-    public String[] getCurrentState() {
-        currentState[0] = String.valueOf(drone.getBatteryLevel());
-        currentState[1] = drone.getHeading().toString();
-        return currentState;
     }
 
     //getRespectiveDirections() gets drone's current heading and sets its respective front, left, and right directions
@@ -123,7 +120,6 @@ public class Controller {
         return null;
     } 
 
-    //REMEMBER TO DECREASE BATTERY ACCORDINGLY
 
     //if previous was null -> means initial state
     private JSONObject previousNull() {
@@ -193,6 +189,34 @@ public class Controller {
 
     }
 
+    //getResults() called by acknkowledgeResults, returns Json object thats related to cost status and everything
+    //gets the cost and status and extra info
+    //decreases battery accordingly, MIA throw error if battery too low
+    //deal with incorrect commands
+    //spits back action and result json objects
+    //explorer can then set previousresult as those json objects
+    public JSONObject getResult(String s) {
+        JSONObject response = new JSONObject(new JSONTokener(new StringReader(s)));
+        logger.info("** Response received:\n"+response.toString(2));
+        Integer cost = response.getInt("cost");
+        logger.info("The cost of the action was {}", cost);
+        String status = response.getString("status");
+        logger.info("The status of the drone is {}", status);
+        JSONObject extraInfo = response.getJSONObject("extras");
+        logger.info("Additional information received: {}", extraInfo);
+
+        try {
+            drone.decreaseBattery(cost);
+            if (drone.getBatteryLevel() <= 0) {
+                throw new ArithmeticException();
+            }
+        } catch (ArithmeticException e) {
+            logger.info("Battery too low, terminating program");
+        }
+
+        return response;
+
+    }
 
     
 }
