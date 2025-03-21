@@ -3,10 +3,21 @@ package ca.mcmaster.se2aa4.island.teamXXX;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import org.json.JSONObject;
 
 public class Controller {
     //attributes
+    
+    //Just added a logger to verify logic
+    private final Logger logger = LogManager.getLogger();
+
     private Drone drone; 
     private String pastState; //need a past state verifying to get to an island
     private Navigator navigator; 
@@ -16,6 +27,11 @@ public class Controller {
     private String front;
     private String left;
     private String right;
+    private Integer cost;
+    private String status;
+    private JSONObject extraInfo;
+
+    private Queue<JSONObject> decisionQ = new LinkedList<>();
 
     //Constructor
     public Controller(Drone drone) {
@@ -29,6 +45,14 @@ public class Controller {
 
     }
 
+    //returns the information from the action that was selected and called in Explorer.takeDecision()
+    public void resultOfDecision(Integer cost, String status, JSONObject extraInfo){
+        this.cost = cost;
+        this.status = status;
+        this.extraInfo = extraInfo; 
+    
+    }
+
     //getCurrentstate returns String[] where first index is battery and second index is heading
     public String[] getCurrentState() {
         currentState[0] = String.valueOf(drone.getBatteryLevel());
@@ -38,24 +62,24 @@ public class Controller {
 
     //getRespectiveDirections() gets drone's current heading and sets its respective front, left, and right directions
     public void getRespectiveDirections() {
-        front = drone.getHeading().toString();
-        if ("EAST".equals(front)) {
-            front = "E";
-            left = "N";
-            right = "S";
+        front = this.drone.getHeading();
+        if ("E".equals(front)) {
+            this.front = "E";
+            this.left = "N";
+            this.right = "S";
             
-        } else if ("SOUTH".equals(front)) {
-            front = "S";
-            left = "E";
-            right = "W";
-        } else if ("WEST".equals(front)) {
-            front = "W";
-            left = "S";
-            right = "N";
-        } else if ("NORTH".equals(front)) {
-            front = "N";
-            left = "W";
-            right = "E";
+        } else if ("S".equals(front)) {
+            this.front = "S";
+            this.left = "E";
+            this.right = "W";
+        } else if ("W".equals(front)) {
+            this.front = "W";
+            this.left = "S";
+            this.right = "N";
+        } else if ("N".equals(front)) {
+            this.front = "N";
+            this.left = "W";
+            this.right = "E";
         }
     }
 
@@ -107,9 +131,6 @@ public class Controller {
         }
         else if (pastState == "heading") {
             return previousHeading();
-        }
-        else if (pastState == "stop") {
-            //return previousStop(); //idk if we will ever use this
         }
         else if (pastState ==  "fly") { 
             return previousFly();
@@ -193,6 +214,47 @@ public class Controller {
 
     }
 
+    //Following methods below is just to find a ground tile
+    //it uses a Queue to store the predetermined decisions to make
+    public void findGroundDecisions(){
 
-    
+        getRespectiveDirections();
+        //fly east 15 times
+        for(int i = 0; i < 15; i++){
+            decisionQ.add(commands.get("fly"));
+        }
+
+        logger.info("CHECKING HERE {}", right);
+
+        //turn towards the south
+        decisionQ.add(createCommand("heading", "right"));
+
+        //echo south for a ground tile
+        decisionQ.add(createCommand("echo", "right"));
+    }
+
+    public String executeFindGroundDecisions(){
+        //Check if the drone batterylevel is decreasing after each updateDrone() call
+        logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
+
+        JSONObject decision = decisionQ.remove();
+
+        //once we get to the heading decision it needs to change the heading of the drone accordingly
+        getRespectiveDirections();
+        if((decision.get("action")).equals("heading")){
+            
+            String newDirection = decision.getJSONObject("parameters").getString("direction");
+            drone.setHeading(newDirection);
+        }
+
+        //check if the direction was changed
+        logger.info("New heading of the drone is {}", drone.getHeading());
+
+        return decision.toString();
+    }
+
+    public void updateDrone(){
+        //updates battery after a decision is made
+        drone.decreaseBattery(cost);
+    }
 }

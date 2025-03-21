@@ -8,7 +8,7 @@ import ca.mcmaster.se2aa4.island.teamXXX.Direction;
 
 public class Echo implements Decision{
     private final Logger logger = LogManager.getLogger();
-    private Direction direction; //direction used for radar
+    private String direction; //direction used for radar
 
     private int cost;
     private int range;
@@ -16,7 +16,7 @@ public class Echo implements Decision{
     private String status;
 
     // Constructor to allow setting the direction 
-    public Echo(Direction direction) {
+    public Echo(String direction) {
         this.direction = direction;
     }
     //Write to Json
@@ -25,7 +25,7 @@ public class Echo implements Decision{
         JSONObject decision = new JSONObject();
         decision.put("action", "echo");
         JSONObject parameters = new JSONObject();
-        parameters.put("direction", this.direction.name()); 
+        parameters.put("direction", direction); 
         decision.put("parameters", parameters);
         logger.info("** Decision: {}",decision.toString());
         return decision;

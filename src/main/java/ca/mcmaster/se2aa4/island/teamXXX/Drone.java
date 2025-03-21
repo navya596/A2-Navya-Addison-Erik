@@ -1,41 +1,41 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
 public class Drone {
-    private double battery_level;
-    private Direction heading;
+    private Integer battery_level;
+    private String heading;
     private int x_coord;
     private int y_coord;
 
     //Constructor
-    public Drone(double battery_level, Direction heading, int x_coord, int y_coord) {
+    public Drone(Integer battery_level, String heading, int x_coord, int y_coord) {
         this.battery_level = battery_level;
         this.heading = heading;
-        this.xcoord = xcoord;
-        this.ycoord = ycoord;
+        this.x_coord = x_coord;
+        this.y_coord = y_coord;
     }
 
     //Getter for battery level
-    public double getBatteryLevel () {
+    public Integer getBatteryLevel () {
         return battery_level;
     }
 
     //Getter for heading
-    public Direction getHeading () {
+    public String getHeading () {
         return heading;
     }
 
     //Setter for batter level
-    public void setBatteryLevel (double battery) {
+    public void setBatteryLevel (Integer battery) {
         this.battery_level = battery;
     }
 
     //Setter for heading
-    public void setHeading (Direction head) {
+    public void setHeading (String head) {
         this.heading = head;
     }
 
     //Decrease battery level
-    public void decreaseBattery (double amount) {
+    public void decreaseBattery (Integer amount) {
         if (battery_level - amount >= 0) {
             battery_level-=amount;
 
@@ -48,28 +48,28 @@ public class Drone {
     //Change heading 
     public void changeHeading (Boolean isleftturn) {
         if (isleftturn) {
-            if (heading == EAST) heading = NORTH;
-            else if (heading == SOUTH) heading = EAST;
-            else if (heading == WEST) heading = SOUTH;
-            else if (heading == NORTH) heading = WEST;
+            if (heading == "E") heading = "N";
+            else if (heading == "S") heading = "E";
+            else if (heading == "W") heading = "S";
+            else if (heading == "N") heading = "W";
         } else {
-            if (heading == EAST) heading = SOUTH;
-            else if (heading == SOUTH) heading = WEST;
-            else if (heading == WEST) heading = NORTH;
-            else if (heading == NORTH) heading = EAST;
+            if (heading == "E") heading = "S";
+            else if (heading == "S") heading = "W";
+            else if (heading == "W") heading = "N";
+            else if (heading == "N") heading = "E";
         }
     }
 
     //primitive move forward
     public void move() {
-        if (heading == EAST) {
-            xcoord++;
-        } else if (heading == SOUTH) {
-            ycoord++;
-        } else if (heading == WEST) {
-            xcoord--;
-        } else if (heading == NORTH) {
-            ycoord--;
-        }
+        // if (heading == Direction.EAST) {
+        //     x_coord++;
+        // } else if (heading == Direction.SOUTH) {
+        //     y_coord++;
+        // } else if (heading == Direction.WEST) {
+        //     x_coord--;
+        // } else if (heading == Direction.NORTH) {
+        //     y_coord--;
+        // }
     }
 }
