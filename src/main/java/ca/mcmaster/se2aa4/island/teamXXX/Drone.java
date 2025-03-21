@@ -1,17 +1,17 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+import static ca.mcmaster.se2aa4.island.teamXXX.Direction.*;
+
 public class Drone {
     private double battery_level;
     private Direction heading;
-    private int x_coord;
-    private int y_coord;
+    private Position drone_position;
 
     //Constructor
-    public Drone(double battery_level, Direction heading, int x_coord, int y_coord) {
+    public Drone(double battery_level, Direction heading) {
         this.battery_level = battery_level;
         this.heading = heading;
-        this.xcoord = xcoord;
-        this.ycoord = ycoord;
+        this.drone_position = new Position(1,1);
     }
 
     //Getter for battery level
@@ -63,13 +63,13 @@ public class Drone {
     //primitive move forward
     public void move() {
         if (heading == EAST) {
-            xcoord++;
+            drone_position.setX(drone_position.x() + 1);
         } else if (heading == SOUTH) {
-            ycoord++;
+            drone_position.setY(drone_position.y() + 1);
         } else if (heading == WEST) {
-            xcoord--;
+            drone_position.setX(drone_position.x() - 1);
         } else if (heading == NORTH) {
-            ycoord--;
+            drone_position.setY(drone_position.y() - 1);
         }
     }
 }
