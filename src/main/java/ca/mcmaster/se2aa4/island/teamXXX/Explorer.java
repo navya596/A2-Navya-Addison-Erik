@@ -38,6 +38,8 @@ public class Explorer implements IExplorerRaid {
         controller.findGroundDecisions();
     }
 
+ 
+
     @Override
     public String takeDecision() {
         decision = controller.executeFindGroundDecisions();
@@ -46,13 +48,8 @@ public class Explorer implements IExplorerRaid {
             controller.goToGroundDecisions();
             decision = controller.executeFindGroundDecisions();
             
-        }
-
-        
+        }        
         return decision;
-        
-
-        
     }
 
     @Override
