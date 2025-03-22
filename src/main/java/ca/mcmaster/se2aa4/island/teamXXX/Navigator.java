@@ -30,6 +30,8 @@ public class Navigator {
         return Math.abs(start.x() - end.x()) + Math.abs(start.y() - end.y());
     }
 
+    
+
 
 
 
