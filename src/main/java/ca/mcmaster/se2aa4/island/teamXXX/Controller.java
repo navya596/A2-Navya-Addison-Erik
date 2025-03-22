@@ -9,6 +9,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import java.util.ArrayList;
+import ca.mcmaster.se2aa4.island.teamXXX.TileValue.*;
 
 public class Controller {
     //attributes
@@ -27,6 +29,7 @@ public class Controller {
     private Integer cost;
     private String status;
     private JSONObject extraInfo;
+    
 
     private Queue<JSONObject> decisionQ = new LinkedList<>();
 
@@ -254,6 +257,8 @@ public class Controller {
         }
         else { //means queue is empty, all steps have been performed
             //go back to explore class
+            
+
             return "queue empty";
         }
         
@@ -275,6 +280,8 @@ public class Controller {
                 }
 
                 logger.info("GOING TO GROUND IN RANGE: " + range);
+
+                
                 
                 decisionQ.add(commands.get("scan"));
                 decisionQ.add(createCommand("heading", "right"));
@@ -284,6 +291,7 @@ public class Controller {
                 decisionQ.add(createCommand("heading", "left"));
                 decisionQ.add(commands.get("scan"));
             }
+            
             
             
         } else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
@@ -371,6 +379,53 @@ public class Controller {
 
 
     }
+
+    public TileValue analyzeScan() {
+        if (extraInfo.has("biomes")) {
+            ArrayList biomesFound = (ArrayList) extraInfo.get("biomes");
+            if (!biomesFound.contains("OCEAN")) { //no ocean biome (ground)
+                return TileValue.GROUND;
+            } else if (biomesFound.size() > 1) { //both ocean and some other biome (coastline)
+                return TileValue.COAST;
+            } else {
+                return TileValue.OCEAN;
+            }
+        } else {
+            return TileValue.NODATA;
+        }
+    }
+
+    public void traverseCoastDecision() {
+        getRespectiveDirections();
+        TileValue scanResult = analyzeScan();
+        if (scanResult == TileValue.GROUND) {
+            decisionQ.add(createCommand("heading", "left"));
+            decisionQ.add(commands.get("scan"));
+        } else if (scanResult == TileValue.OCEAN) {
+            decisionQ.add(createCommand("heading", "right"));
+            decisionQ.add(commands.get("scan"));
+        } else {
+            decisionQ.add(commands.get("fly"));
+            decisionQ.add(commands.get("scan"));
+        }
+        
+
+
+
+
+    }
+
+    public String traverseCoast() {
+        if (decisionQ.isEmpty()) {
+            traverseCoastDecision();
+            return decisionQ.remove().toString();
+        } else {
+        return decisionQ.remove().toString();
+        }
+    }
+
+    
+
 
     
     

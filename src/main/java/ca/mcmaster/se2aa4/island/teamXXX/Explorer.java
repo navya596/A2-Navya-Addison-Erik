@@ -31,7 +31,7 @@ public class Explorer implements IExplorerRaid {
         logger.info("Battery level is {}", batteryLevel);
     
         //Initialize the Controller object
-        this.controller = new Controller(new Drone(batteryLevel, direction, 1, 1));
+        this.controller = new Controller(new Drone(batteryLevel, direction));
         
 
         //for now it will execute the steps provided from findGroundDecisions
@@ -45,14 +45,11 @@ public class Explorer implements IExplorerRaid {
             //must enqueue decisions to go to ground
             controller.goToGroundDecisions();
             decision = controller.executeFindGroundDecisions();
-            
         }
 
         
         return decision;
-        
 
-        
     }
 
     @Override
