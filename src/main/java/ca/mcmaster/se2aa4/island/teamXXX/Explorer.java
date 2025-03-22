@@ -19,6 +19,7 @@ public class Explorer implements IExplorerRaid {
     private int cost;
     private String status;
     private JSONObject extraInfo;
+    private int i = 0;
 
     @Override
     public void initialize(String s) {
@@ -35,17 +36,42 @@ public class Explorer implements IExplorerRaid {
         
 
         //for now it will execute the steps provided from findGroundDecisions
-        controller.findGroundDecisions();
+        //controller.findGroundDecisions();
     }
 
     @Override
     public String takeDecision() {
-        decision = controller.executeFindGroundDecisions();
+        if (i != 30 && i < 38) {
+            decision = controller.commands.get("fly").toString();
+            i++;
+        }
+        
+        else if (i == 30) {
+            decision = controller.createCommand("heading", "right").toString();
+            controller.drone.setHeading("S");
+            i++;
+        }
+
+        else if (i == 38) {
+            decision = controller.commands.get("scan").toString();
+            i++;
+        }
+
+        else if (i > 37 && i != 200) {
+            decision = controller.traverseCoast().toString();
+            i++;
+        } else if (i == 200) {
+            decision = controller.commands.get("stop").toString();
+        }
+        
+        
+        /*controller.executeFindGroundDecisions();
         if (decision.equals("queue empty")) { //means ground has been found and queue is empty
             //must enqueue decisions to go to ground
             controller.goToGroundDecisions();
             decision = controller.executeFindGroundDecisions();
         }
+        */
 
         
         return decision;

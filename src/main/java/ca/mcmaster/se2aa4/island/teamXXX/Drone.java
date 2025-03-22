@@ -22,6 +22,10 @@ public class Drone {
         return heading;
     }
 
+    public Position getPosition() {
+        return dronePosition;
+    }
+
     //Setter for batter level
     public void setBatteryLevel (Integer battery) {
         this.battery_level = battery;

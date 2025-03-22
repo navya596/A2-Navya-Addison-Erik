@@ -18,17 +18,18 @@ public class Controller {
     //Just added a logger to verify logic
     private final Logger logger = LogManager.getLogger();
 
-    private Drone drone; 
+    protected Drone drone; 
     private String pastState; //need a past state verifying to get to an island
     private Navigator navigator; 
     private String[] currentState = new String[2];
-    private Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
+    protected Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
     private String front;
     private String left;
     private String right;
     private Integer cost;
     private String status;
     private JSONObject extraInfo;
+    private int runs;
     
 
     private Queue<JSONObject> decisionQ = new LinkedList<>();
@@ -36,6 +37,7 @@ public class Controller {
     //Constructor
     public Controller(Drone drone) {
         this.drone = drone;
+        this.runs = 0;
         commands = new HashMap<>();
         commands.put("fly", new JSONObject().put("action", "fly"));
         commands.put("stop", new JSONObject().put("action", "stop"));
@@ -86,7 +88,7 @@ public class Controller {
     /*createCommand() takes the action as a string parameter and
     dynamically creates the respective heading or echo command based on 
     current respective directions */
-    private JSONObject createCommand(String action, String directionType) {
+    protected JSONObject createCommand(String action, String directionType) {
         //get respective direction
         getRespectiveDirections();
         //create put action in json ojectt
@@ -382,12 +384,20 @@ public class Controller {
 
     public TileValue analyzeScan() {
         if (extraInfo.has("biomes")) {
-            ArrayList biomesFound = (ArrayList) extraInfo.get("biomes");
-            if (!biomesFound.contains("OCEAN")) { //no ocean biome (ground)
+            JSONArray biomesFound = extraInfo.getJSONArray("biomes");
+            boolean hasOcean = false;
+            for (int i = 0; i < biomesFound.length(); i++) {
+                String biome = biomesFound.getString(i).toUpperCase();
+                if (biome.contains("OCEAN")) {
+                    hasOcean = true;
+                    break;
+                }
+            }
+            if (!hasOcean) { // no ocean means only ground
                 return TileValue.GROUND;
-            } else if (biomesFound.size() > 1) { //both ocean and some other biome (coastline)
+            } else if (biomesFound.length() > 1) { // if more than one biome, we assume coastline
                 return TileValue.COAST;
-            } else {
+            } else { // otherwise, only ocean is present
                 return TileValue.OCEAN;
             }
         } else {
@@ -396,32 +406,48 @@ public class Controller {
     }
 
     public void traverseCoastDecision() {
-        getRespectiveDirections();
         TileValue scanResult = analyzeScan();
+        logger.info("SCAN RESULT: {}", scanResult);
+        
         if (scanResult == TileValue.GROUND) {
-            decisionQ.add(createCommand("heading", "left"));
-            decisionQ.add(commands.get("scan"));
-        } else if (scanResult == TileValue.OCEAN) {
+            logger.info(drone.getHeading());
             decisionQ.add(createCommand("heading", "right"));
             decisionQ.add(commands.get("scan"));
-        } else {
+        } else if (scanResult == TileValue.OCEAN) {
+            decisionQ.add(createCommand("heading", "left"));
+            decisionQ.add(commands.get("scan"));
+        } else if (scanResult == TileValue.COAST) {
             decisionQ.add(commands.get("fly"));
             decisionQ.add(commands.get("scan"));
+        } else {
+            decisionQ.add(commands.get("stop"));
         }
-        
-
-
-
-
+        logger.info("DECISION QUEUE: {}", decisionQ);
+        logger.info("Added coast traversal decisions");
     }
 
     public String traverseCoast() {
+        JSONObject decision;
+        logger.info("traversing coast");
+        logger.info("DECISION QUEUE: {}", decisionQ);
         if (decisionQ.isEmpty()) {
+            logger.info("decision queue empty. Update decisions");
             traverseCoastDecision();
-            return decisionQ.remove().toString();
+            decision = decisionQ.remove();
+            
         } else {
-        return decisionQ.remove().toString();
+            logger.info("scanning");
+            decision = decisionQ.remove();
         }
+        
+        getRespectiveDirections();
+        if((decision.get("action")).equals("heading")){
+        
+            String newDirection = decision.getJSONObject("parameters").getString("direction");
+            drone.setHeading(newDirection);
+        }
+
+        return decision.toString();
     }
 
     
