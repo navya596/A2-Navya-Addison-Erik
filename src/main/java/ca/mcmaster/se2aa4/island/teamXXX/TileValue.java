@@ -4,5 +4,6 @@ public enum TileValue {
     WATER,
     GROUND,
     SITE,
-    CREEK
+    CREEK,
+    COAST
 }

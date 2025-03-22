@@ -14,11 +14,23 @@ public class Navigator {
         this.curr_heading = curr_heading;
     }
 
+    public void setCurrPosition(Position p) {
+        curr_position = p;
+    }
+
+    public void SetTargetPosition(Position p) {
+        target_position = p;
+    }
+
+    public void setHeading(Direction heading) {
+        curr_heading = heading;
+    }
+
     private int pathDistance(Position start, Position end) {
         return Math.abs(start.x() - end.x()) + Math.abs(start.y() - end.y());
     }
 
-    
+
 
 
 }

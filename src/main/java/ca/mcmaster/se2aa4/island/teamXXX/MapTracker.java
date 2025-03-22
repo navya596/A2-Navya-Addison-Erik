@@ -5,8 +5,8 @@ import java.util.Map;
 import java.util.ArrayList;
 
 public class MapTracker {
-    private Map<Position, TileValue> map;
-    private ArrayList<Position> foundCreeks;
+    private Map<Coordinate, TileValue> map;
+    private ArrayList<Coordinate> foundCreeks;
 
     public MapTracker() {
         map = new HashMap<>();
@@ -14,10 +14,10 @@ public class MapTracker {
     }
 
     public void updateTile(Position p, TileValue value) {
-        map.put(new Position(p), value);
+        map.put(new Coordinate(p), value);
     }
 
-    public TileValue getTile(Position p, TileValue value) {
-        return map.get(p);
+    public TileValue getTile(Coordinate c, TileValue value) {
+        return map.get(c);
     }
 }
