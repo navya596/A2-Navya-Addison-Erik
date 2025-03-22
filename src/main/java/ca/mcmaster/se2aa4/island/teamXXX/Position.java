@@ -23,7 +23,6 @@ public class Position {
         return y;
     }
 
-    // Change these from private to public:
     public void setX(int newX) {
         x = newX;
     }

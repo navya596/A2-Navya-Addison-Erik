@@ -1,5 +1,7 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+import java.util.*;
+
 public class Navigator {
 
     private Position curr_position;
@@ -11,6 +13,12 @@ public class Navigator {
         this.target_position = target_position;
         this.curr_heading = curr_heading;
     }
+
+    private int pathDistance(Position start, Position end) {
+        return Math.abs(start.x() - end.x()) + Math.abs(start.y() - end.y());
+    }
+
+    
 
 
 }
