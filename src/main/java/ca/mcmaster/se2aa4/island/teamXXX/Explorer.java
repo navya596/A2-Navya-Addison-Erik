@@ -43,7 +43,7 @@ public class Explorer implements IExplorerRaid {
         decision = controller.executeFindGroundDecisions();
         if (decision.equals("foundGround")) { //means ground has been found and queue is empty
             //must enqueue decisions to go to ground
-            controller.goToGround(extraInfo);
+            controller.goToGroundDecisions(extraInfo);
             return controller.goToGround();
         }
         else {

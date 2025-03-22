@@ -257,19 +257,27 @@ public class Controller {
 
     }
 
-    public void goToGround(JSONObject extraInfo) {
-        if (extraInfo.has("range")) {
+    public void goToGroundDecisions(JSONObject extraInfo) {
+        if (extraInfo.has("range") && extraInfo.get("found").equals("GROUND")) {
             getRespectiveDirections();
             int range = (int) extraInfo.get("range");
-            //enqueue fly to ground based on range
-            for(int i = 0; i < range; i++){
-                decisionQ.add(commands.get("fly"));
-            }
+            if (range != 0) {
+                //enqueue fly to ground based on range
+                for(int i = 0; i < range; i++){
+                    decisionQ.add(commands.get("fly"));
+                }
 
-            logger.info("GOING TO GROUND IN RANGE: ", range);
+                logger.info("GOING TO GROUND IN RANGE: " + range);
+                
+                decisionQ.add(commands.get("scan"));
+            }
+            //********else if the range is 0, we might wanna call scan command 
             
+        } else if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
+            //*********if out of range we might wanna echo left or right of current heading
         }
-    }
+
+    } 
 
     public String goToGround() {
         logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
