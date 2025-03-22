@@ -19,7 +19,6 @@ public class Controller {
     private String pastState; //need a past state verifying to get to an island
     private Navigator navigator; 
     private String[] currentState = new String[2];
-    private JSONObject decision = new JSONObject();
     private Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
     private String front;
     private String left;
@@ -231,23 +230,52 @@ public class Controller {
     }
 
     public String executeFindGroundDecisions(){
-        //Check if the drone batterylevel is decreasing after each updateDrone() call
-        logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
+        if (!decisionQ.isEmpty()) {
+            //Check if the drone batterylevel is decreasing after each updateDrone() call
+            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
 
-        JSONObject decision = decisionQ.remove();
+            JSONObject decision = decisionQ.remove();
 
-        //once we get to the heading decision it needs to change the heading of the drone accordingly
-        getRespectiveDirections();
-        if((decision.get("action")).equals("heading")){
+            //once we get to the heading decision it needs to change the heading of the drone accordingly
+            getRespectiveDirections();
+            if((decision.get("action")).equals("heading")){
             
-            String newDirection = decision.getJSONObject("parameters").getString("direction");
-            drone.setHeading(newDirection);
+                String newDirection = decision.getJSONObject("parameters").getString("direction");
+                drone.setHeading(newDirection);
+            }
+
+            //check if the direction was changed
+            logger.info("New heading of the drone is {}", drone.getHeading());
+
+            return decision.toString();
         }
+        else { //means queue is empty, all steps have been performed
+            //go back to explore class
+            return "foundGround";
+        }
+        
 
-        //check if the direction was changed
-        logger.info("New heading of the drone is {}", drone.getHeading());
+    }
 
-        return decision.toString();
+    public void goToGround(JSONObject extraInfo) {
+        if (extraInfo.has("range")) {
+            getRespectiveDirections();
+            int range = (int) extraInfo.get("range");
+            //enqueue fly to ground based on range
+            for(int i = 0; i < range; i++){
+                decisionQ.add(commands.get("fly"));
+            }
+
+            logger.info("GOING TO GROUND IN RANGE: ", range);
+            
+        }
+    }
+
+    public String goToGround() {
+        logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
+        JSONObject groundDecision = decisionQ.remove();
+        getRespectiveDirections();
+        return groundDecision.toString();
     }
 
     public void updateDrone(){
