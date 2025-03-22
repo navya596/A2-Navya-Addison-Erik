@@ -8,6 +8,7 @@ import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import ca.mcmaster.se2aa4.island.teamXXX.TileValue.*;
 
@@ -223,9 +224,11 @@ public class Controller {
         }
 
         logger.info("CHECKING HERE {}", right);
+        decisionQ.add(commands.get("scan"));
 
         //turn towards the south
         decisionQ.add(createCommand("heading", "right"));
+        decisionQ.add(commands.get("scan"));
 
         //echo south for a ground tile
         decisionQ.add(createCommand("echo", "right"));
@@ -253,14 +256,17 @@ public class Controller {
         }
         else { //means queue is empty, all steps have been performed
             //go back to explore class
-            return "foundGround";
-        }
+            return "queue empty";
+        }        
     }
 
+    public void goToGroundDecisions() {
 
-
-    public void goToGroundDecisions(JSONObject extraInfo) {
-        if (extraInfo.has("range") && extraInfo.get("found").equals("GROUND")) {
+        //add a null check for extra info before accessing it 
+        //be consistent with using opt safely to access json values and prevent exceptions
+        //add null check for creeks array???
+        //logic for out of range??
+        if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
             getRespectiveDirections();
             int range = (int) extraInfo.get("range");
             if (range != 0) {
@@ -272,19 +278,99 @@ public class Controller {
                 logger.info("GOING TO GROUND IN RANGE: " + range);
                 
                 decisionQ.add(commands.get("scan"));
+                decisionQ.add(createCommand("heading", "right"));
+                decisionQ.add(commands.get("scan"));
             }
-            //********else if the range is 0, we might wanna call scan command 
+            else {
+                decisionQ.add(createCommand("heading", "left"));
+                decisionQ.add(commands.get("scan"));
+            }
             
-        } else if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
+            
+        } else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
             //*********if out of range we might wanna echo left or right of current heading
+
+            //echo left
+            //echo right
         }
-    } 
+        else if (extraInfo != null && extraInfo.has("biomes") && extraInfo.has("creeks")) { //else if extra info has a key called biomes and creeks 
+            Object creeksObj = extraInfo.opt("creeks");  // Use opt() to avoid exceptions
+            Object biomesObj = extraInfo.opt("biomes");
+
+            JSONArray creeksArray = null;
+            JSONArray biomesArray = null;
+
+            if (creeksObj instanceof JSONArray) {
+                creeksArray = (JSONArray) creeksObj;
+            }
+            if (biomesObj instanceof JSONArray) {
+                biomesArray = (JSONArray) biomesObj;
+            }
+
+            
+            if (biomesArray != null) {  
+
+                // Check if biomes contains "OCEAN"
+                boolean containsOcean = false;
+                for (int i = 0; i < biomesArray.length(); i++) {  
+                    if ("OCEAN".equals(biomesArray.getString(i))) {  
+                        containsOcean = true;  
+                        break;  
+                    }  
+                }
+        
+                if (creeksArray.length() > 0) {  
+                    decisionQ.add(commands.get("stop"));  
+                }  
+                else if (biomesArray.length() == 1 && containsOcean) {  
+                    decisionQ.add(createCommand("echo", "left"));   //handle out of range in above if state ment
+                }  
+                else if (biomesArray.length() != 1 && containsOcean) {  
+                    decisionQ.add(commands.get("fly"));  
+                    decisionQ.add(commands.get("scan"));
+                    
+                    
+                }  
+                else {  
+                    decisionQ.add(createCommand("heading", "right"));  
+                    decisionQ.add(commands.get("fly"));  
+                    decisionQ.add(commands.get("scan"));
+
+                    
+                } 
+
+                
+                
+            }  
+
+            //decisionQ.add(commands.get("scan"));
+            //decisionQ.add(commands.get("stop"));
+        }
+
+    }
 
     public String goToGround() {
-        logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
-        JSONObject groundDecision = decisionQ.remove();
-        getRespectiveDirections();
-        return groundDecision.toString();
+        if (extraInfo != null) {
+            logger.info("Extra info: " + extraInfo);
+        } else {
+            logger.info("Extra info is null");
+        }
+        
+        if (!decisionQ.isEmpty()) {
+            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
+            JSONObject groundDecision = decisionQ.remove();
+            getRespectiveDirections();
+            return groundDecision.toString();
+        }
+        else {     
+            return "reachedGround";
+        }
+    }
+
+    public void patrolGroundDecisions() {
+        
+
+
     }
 
     public TileValue analyzeScan() {
@@ -339,10 +425,7 @@ public class Controller {
             return decision.toString();
         }
 
-
     }
-
-
 
     public void updateDrone(){
         //updates battery after a decision is made
