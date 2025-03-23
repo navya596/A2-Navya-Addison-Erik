@@ -9,8 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.util.ArrayList;
-import ca.mcmaster.se2aa4.island.teamXXX.TileValue.*;
 
 public class Controller {
     //attributes
@@ -115,105 +113,67 @@ public class Controller {
 
     }
 
-    
-    //I lowkey dont like this way of identifying previous commands because it uses a lot of if statements
-    //Let me know if you guys have a better way of going around this logic
-    public JSONObject getDecision(JSONObject previousDecision, JSONObject previousResult){
+    public void getPastEcho(JSONObject previousDecision){
         pastState = (String) previousDecision.get("action");
-        // Extract "extras" from previousResult if available
-        JSONObject extras = null;
-        if (previousResult != null && previousResult.has("extras")) {
-            extras = previousResult.getJSONObject("extras");
-        }
 
-        //decrease battery based on previousResult
-
-        if (pastState == null) { 
-            return previousNull();
-        }
-        else if (pastState == "heading") {
-            return previousHeading();
-        }
-        else if (pastState ==  "fly") { 
-            return previousFly();
-        }
-        else if (pastState == "scan") {
-            //return previousScan(previousResult);
-        }
-        else if (pastState == "echo") { //previousResult is only needed for this to get the range of the ground cell
-            return previousEcho(previousDecision, previousResult, extras);
-        }
-        return null;
-    } 
-
-    //REMEMBER TO DECREASE BATTERY ACCORDINGLY
-
-    //if previous was null -> means initial state
-    private JSONObject previousNull() {
-        return createCommand("echo", "front");
-            
-    }
-
-    private JSONObject previousHeading() {
-        return commands.get("fly");
-    }
-    
-    private JSONObject previousFly() {
-        return createCommand("echo", "front");
-    }
-
-    /*private JSONObject previousScan(JSONObject previousResult) { //need to modify this later
-        
-    }*/
-
-    private JSONObject previousEcho(JSONObject previousAction, JSONObject previousResult, JSONObject extras) {
-        JSONObject parameters = previousAction.getJSONObject("parameters");
-        String previousDirection = parameters.getString("direction");
-        //if ground was found in extras
-        if ("GROUND".equals(extras.getString("found"))) {
-            
+        if ("echo".equals(pastState)) { 
+            JSONObject parameters = previousDecision.getJSONObject("parameters");
+            String previousDirection = parameters.getString("direction");            
             // Update current respective directions
             getRespectiveDirections(); 
-
-            //if current direction is same as previous echo direction in previousAction
-            if (drone.getHeading().equals(parameters.getString("direction")) ) {
-                if (Integer.parseInt(parameters.getString("range")) <= 2 ) { //if range of previous echo direction was <= 2 ie close enough 
-                    return commands.get("stop"); //stop and return to base (only for the mvp) 
-                }
-                else { //if range of previous echo direction was not <= 2 ie its not close enough (this is just an estimation) in previousResult
-                    return commands.get("fly");
-                }                    
-                
-            }
-            else { //change heading to that direction 
-                // Determine if previous echo was done on respective left or right
-                if (previousDirection.equals(left)) {
-                    drone.changeHeading(true);
-                    return createCommand("heading", "left");
-                } else if (previousDirection.equals(right)) {
-                    drone.changeHeading(false);
-                    return createCommand("heading", "right");
-                    
-                }
-    
-            }
-        } else if ("OUT_OF_RANGE".equals(extras.getString("found"))) {
-            //echo in next direction (front -> left -> right by convention)
-            // Determine if previous echo was done on respective left, right, or front
-            if (previousDirection.equals(left)) {
-                return createCommand("echo", "right");
-            } else if (previousDirection.equals(front)) {
-                return createCommand("echo", "left");
-            }
-            else if (previousDirection.equals(right)) {
-                drone.changeHeading(false); //try changing heading if all echo directions were out of range
-                return createCommand("heading", "right");
-
-            }
-        } 
             
-        return null;
+            //If ground was found for the previous echo command
+            if ("GROUND".equals(extraInfo.getString("found"))) {
+                //if current direction's left is same as previous echo direction (want to make sure ground is always on the left)
+                if (left.equals(parameters.getString("direction")) ) {
+                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
+                        if (extraInfo.getInt("range") == 0) {
+                            decisionQ.add(commands.get("fly"));
+                        }
+                    }
+                    else { //go to ground if range is not close enough
+                        goToGroundDecisions();
+                    }   
+                } else if (front.equals(parameters.getString("direction")) ) { 
 
+                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
+                        if (extraInfo.getInt("range") == 0) {
+                            decisionQ.add(createCommand("heading", "right"));
+                        }
+                    }
+                    else { //go to ground if range is not close enough
+                        goToGroundDecisions();
+                    } 
+                } else if (right.equals(parameters.getString("direction")) ) {
+                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
+                        if (extraInfo.getInt("range") == 0) {
+                            decisionQ.add(createCommand("heading", "left"));
+                        }
+                    }
+                    else { //go to ground if range is not close enough
+                        goToGroundDecisions();
+                    } 
+    
+                }
+            } else if ("OUT_OF_RANGE".equals(extraInfo.getString("found"))) {
+                //echo in next direction (front -> left -> right by convention)
+                // Determine if previous echo was done on respective left, right, or front
+                if (previousDirection.equals(left)) {
+                    decisionQ.add(createCommand("echo", "right"));
+                } else if (previousDirection.equals(front)) {
+                    decisionQ.add(createCommand("echo", "left"));
+                }
+                else if (previousDirection.equals(right)) {
+                    drone.changeHeading(false); //try changing heading if all echo directions were out of range
+                    decisionQ.add(createCommand("heading", "left"));
+    
+                }
+            }
+        }                   
+                
+        
+            
+            
     }
 
     //Following methods below is just to find a ground tile
