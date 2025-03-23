@@ -70,7 +70,7 @@ public class Explorer implements IExplorerRaid {
         }
 
 
-        else if(i<360){
+        else if(i<700){
             controller.bruteForceDecision();
             decision = controller.bruteForceDecisionResult();
             
@@ -119,13 +119,13 @@ public class Explorer implements IExplorerRaid {
         extraInfo = response.getJSONObject("extras");
         logger.info("Additional information received: {}", extraInfo);
         
-        //Pass the result from the decision that was called in takeDecision()
+        //Pass the result from the decision that was called 
         controller.resultOfDecision(cost, status, extraInfo);
         logger.info("Current decision: {}", decision);
-        if (i > 42 && extraInfo.has("range") && extraInfo.has("found") && decision.get("action").equals("echo")) {
+        /*if (i > 42 && extraInfo.has("range") && extraInfo.has("found") && decision.get("action").equals("echo")) {
             controller.analyzeEcho();
             logger.info("going in here");
-        }
+        }*/
         //updates the battery level of the drone
         controller.updateDrone();
     }

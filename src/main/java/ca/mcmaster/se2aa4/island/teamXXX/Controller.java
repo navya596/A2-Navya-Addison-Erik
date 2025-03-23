@@ -353,6 +353,36 @@ public class Controller {
             decisionQ.add(commands.get("scan"));
             
             
+        } 
+        if (found.equals("GROUND") && range == 0 && analyzeScan() != TileValue.GROUND) { // no ocean means only ground
+            decisionQ.add(commands.get("fly"));
+            decisionQ.add(commands.get("fly"));
+            decisionQ.add(commands.get("scan"));
+            
+            
+        } 
+        else if (found.equals("OUT_OF_RANGE")) { // no ocean means only ground
+            
+            if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
+                logger.info("Scan result: " + analyzeScan());
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "left"));
+                drone.setHeading("E");
+                getRespectiveDirections();
+                this.backLogAction = createCommand("heading" ,"left");
+                drone.setHeading("N");
+        
+            } 
+            //vice versa of the if statement above
+            else if(drone.getHeading().equals("N") && (analyzeScan().equals(TileValue.OCEAN))){
+                logger.info("Scan result: " + analyzeScan());
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "right"));
+                drone.setHeading("E");
+                getRespectiveDirections();
+                this.backLogAction = createCommand("heading" ,"right");
+                drone.setHeading("S");
+            }
             //backLogStop = commands.get("stop");
         } 
             
@@ -379,7 +409,7 @@ public class Controller {
                 return TileValue.OCEAN;
             }
         } else {
-            return TileValue.NODATA;
+            return TileValue.NODATA; //previous was either fly, echo, or heading command
         }
     }
 
@@ -495,13 +525,17 @@ public class Controller {
             this.backLogEcho = createCommand("echo", "front");
         }
         //if the queue has no commands in it then pass in a fly and echo command together
-        else {
-            
-            decisionQ.add(commands.get("fly"));
-            this.backLogAction = commands.get("scan");
-            logger.info("flew and scanned here");
-            logger.info("Scan result: " + analyzeScan());
-             
+        else { //Tile value is either no data, coast or ground 
+            if (extraInfo.has("range") && extraInfo.has("found")) { //previous command was echo
+                analyzeEcho();
+                logger.info("going in here");
+            }
+            else if (analyzeScan().equals(TileValue.GROUND) || (analyzeScan().equals(TileValue.COAST))) { //ground
+                decisionQ.add(commands.get("fly"));
+                this.backLogAction = commands.get("scan");
+                logger.info("flew and scanned here");
+                logger.info("Scan result: " + analyzeScan());
+            }
             
         }
         
