@@ -41,37 +41,64 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
-        if (i != 30 && i < 38) {
+
+        if (i < 20) {
             decision = controller.commands.get("fly").toString();
             i++;
         }
         
-        else if (i == 30) {
+        else if (i == 20) {
+            decision = controller.createCommand("echo", "right").toString();
+            i++;
+        }
+
+        else if (i == 21){
             decision = controller.createCommand("heading", "right").toString();
             controller.drone.setHeading("S");
             i++;
         }
 
-        else if (i == 38) {
+        else if (i < 42) {
+            decision = controller.commands.get("fly").toString();
+            i++;
+        }
+
+        else if(i==42){
             decision = controller.commands.get("scan").toString();
             i++;
         }
 
-        else if (i > 37 && i != 200) {
-            decision = controller.traverseCoast().toString();
+
+        else if(i<120){
+            controller.bruteForceDecision();
+            decision = controller.bruteForceDecisionResult();
             i++;
-        } else if (i == 200) {
+        }
+
+        else{
             decision = controller.commands.get("stop").toString();
         }
+
+        // else if (i == 38) {
+        //     decision = controller.commands.get("scan").toString();
+        //     i++;
+        // }
+
+        // else if (i > 37 && i != 200) {
+        //     decision = controller.traverseCoast().toString();
+        //     i++;
+        // } else if (i == 200) {
+        //     decision = controller.commands.get("stop").toString();
+        // }
         
         
-        /*controller.executeFindGroundDecisions();
-        if (decision.equals("queue empty")) { //means ground has been found and queue is empty
-            //must enqueue decisions to go to ground
-            controller.goToGroundDecisions();
-            decision = controller.executeFindGroundDecisions();
-        }
-        */
+        // controller.executeFindGroundDecisions();
+        // if (decision.equals("queue empty")) { //means ground has been found and queue is empty
+        //     //must enqueue decisions to go to ground
+        //     controller.goToGroundDecisions();
+        //     decision = controller.executeFindGroundDecisions();
+        // }
+        
 
         
         return decision;
@@ -91,7 +118,7 @@ public class Explorer implements IExplorerRaid {
         
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
-        controller.getPastEcho(decision); //if the decision is echo, make sure it analyzes it correctly
+        //controller.getPastEcho(decision); //if the decision is echo, make sure it analyzes it correctly
         //updates the battery level of the drone
         controller.updateDrone();
     }

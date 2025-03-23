@@ -28,6 +28,8 @@ public class Controller {
     private String status;
     private JSONObject extraInfo;
     private int runs;
+    private String creek;
+    private JSONObject backLogAction;
     
 
     private Queue<JSONObject> decisionQ = new LinkedList<>();
@@ -246,9 +248,7 @@ public class Controller {
                 logger.info("GOING TO GROUND IN RANGE: " + range);
 
                 
-                
-                decisionQ.add(commands.get("scan"));
-                decisionQ.add(createCommand("heading", "right"));
+                decisionQ.add(createCommand("heading", "left"));
                 decisionQ.add(commands.get("scan"));
             }
             else {
@@ -413,8 +413,55 @@ public class Controller {
         return decision.toString();
     }
 
-    
+    public boolean hasCreek(){
+        if(extraInfo.has("creeks")){
+            JSONArray creekKey = extraInfo.getJSONArray("creeks");
+            this.creek = creekKey.getString(0);
+            return true;
+        }
+        return false;
+    }
 
+    public void bruteForceDecision(){
+        //if two items are added to the Queue one after another we won't be able to properly depict which action happens when
+        //the backLogAction ensures that the next decision made will be off of the correct action
+        if(this.backLogAction != null){
+            decisionQ.add(this.backLogAction);
+
+            //have to set it back to null to allow it to update from the other calls
+            this.backLogAction = null;
+        } 
+        else{
+            //if the drone finds an Ocean tile on while its facing east it will reposition itself to face west
+            if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "left"));
+                drone.setHeading("E");
+                getRespectiveDirections();
+                this.backLogAction = createCommand("heading" ,"left");
+                drone.setHeading("N");
+            } 
+            //vice versa of the if statement above
+            else if(drone.getHeading().equals("N") && analyzeScan().equals(TileValue.OCEAN)){
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "right"));
+                drone.setHeading("E");
+                getRespectiveDirections();
+                this.backLogAction = createCommand("heading" ,"right");
+                drone.setHeading("S");
+            }
+            //if the queue has no commands in it then pass in a fly and echo command together
+            else {
+                decisionQ.add(commands.get("fly"));
+                this.backLogAction = commands.get("scan");
+            }
+        }
+    }
+
+    public String bruteForceDecisionResult(){
+        logger.info(decisionQ.peek());
+        return decisionQ.remove().toString();
+    }
 
     
     
