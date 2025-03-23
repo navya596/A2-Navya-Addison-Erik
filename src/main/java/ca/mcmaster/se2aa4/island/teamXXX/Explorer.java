@@ -91,7 +91,7 @@ public class Explorer implements IExplorerRaid {
         
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
-
+        controller.getPastEcho(decision); //if the decision is echo, make sure it analyzes it correctly
         //updates the battery level of the drone
         controller.updateDrone();
     }

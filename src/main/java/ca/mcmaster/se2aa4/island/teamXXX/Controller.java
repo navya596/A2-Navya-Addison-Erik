@@ -113,11 +113,13 @@ public class Controller {
 
     }
 
-    public void getPastEcho(JSONObject previousDecision){
-        pastState = (String) previousDecision.get("action");
+    public void getPastEcho(String previousDecision){
+
+        JSONObject jsonObject = new JSONObject(previousDecision);
+        String pastState = jsonObject.getString("action");
 
         if ("echo".equals(pastState)) { 
-            JSONObject parameters = previousDecision.getJSONObject("parameters");
+            JSONObject parameters = jsonObject.getJSONObject("parameters");
             String previousDirection = parameters.getString("direction");            
             // Update current respective directions
             getRespectiveDirections(); 
@@ -376,6 +378,7 @@ public class Controller {
         } else if (scanResult == TileValue.OCEAN) {
             decisionQ.add(createCommand("heading", "left"));
             decisionQ.add(commands.get("scan"));
+            decisionQ.add(createCommand("echo", "front"));
         } else if (scanResult == TileValue.COAST) {
             decisionQ.add(commands.get("fly"));
             decisionQ.add(commands.get("scan"));
