@@ -30,6 +30,8 @@ public class Controller {
     private int runs;
     private String creek;
     private JSONObject backLogAction;
+    private JSONObject backLogEcho;
+    private JSONObject backLogStop;
     
 
     private Queue<JSONObject> decisionQ = new LinkedList<>();
@@ -115,7 +117,7 @@ public class Controller {
 
     }
 
-    public void getPastEcho(String previousDecision){
+    /*public void getPastEcho(String previousDecision){
 
         JSONObject jsonObject = new JSONObject(previousDecision);
         String pastState = jsonObject.getString("action");
@@ -178,7 +180,7 @@ public class Controller {
         
             
             
-    }
+    } */
 
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
@@ -230,7 +232,7 @@ public class Controller {
         
     }
 
-    public void goToGroundDecisions() {
+    /*public void goToGroundDecisions() {
 
         //add a null check for extra info before accessing it 
         //be consistent with using opt safely to access json values and prevent exceptions
@@ -292,6 +294,7 @@ public class Controller {
         
                 if (creeksArray.length() > 0) {  
                     decisionQ.add(commands.get("stop"));  
+                    logger.info("STOP 3");
                 }  
                 else if (biomesArray.length() == 1 && containsOcean) {  
                     decisionQ.add(createCommand("echo", "left"));   //handle out of range in above if state ment
@@ -336,13 +339,20 @@ public class Controller {
         else {     
             return "reachedGround";
         }
-    }
+    } */
 
-    public void patrolGroundDecisions() {
+    public void analyzeEcho() {
         
+        int range = extraInfo.getInt("range");
+        String found = (String) extraInfo.get("found");
 
-
-    }
+        if (found.equals("GROUND") && range != 0 && analyzeScan() != TileValue.GROUND) { // no ocean means only ground
+            
+            backLogStop = commands.get("stop");
+        } 
+            
+        
+    } 
 
     public TileValue analyzeScan() {
         if (extraInfo.has("biomes")) {
@@ -384,6 +394,7 @@ public class Controller {
             decisionQ.add(commands.get("scan"));
         } else {
             decisionQ.add(commands.get("stop"));
+            logger.info("STOP 1");
         }
         logger.info("DECISION QUEUE: {}", decisionQ);
         logger.info("Added coast traversal decisions");
@@ -430,37 +441,63 @@ public class Controller {
 
             //have to set it back to null to allow it to update from the other calls
             this.backLogAction = null;
+            return;
         } 
-        else{
-            //if the drone finds an Ocean tile on while its facing east it will reposition itself to face west
-            if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
-                getRespectiveDirections();
-                decisionQ.add(createCommand("heading", "left"));
-                drone.setHeading("E");
-                getRespectiveDirections();
-                this.backLogAction = createCommand("heading" ,"left");
-                drone.setHeading("N");
-            } 
-            //vice versa of the if statement above
-            else if(drone.getHeading().equals("N") && analyzeScan().equals(TileValue.OCEAN)){
-                getRespectiveDirections();
-                decisionQ.add(createCommand("heading", "right"));
-                drone.setHeading("E");
-                getRespectiveDirections();
-                this.backLogAction = createCommand("heading" ,"right");
-                drone.setHeading("S");
-            }
-            //if the queue has no commands in it then pass in a fly and echo command together
-            else {
-                decisionQ.add(commands.get("fly"));
-                this.backLogAction = commands.get("scan");
-            }
+
+        if(this.backLogEcho != null){
+            decisionQ.add(this.backLogEcho);
+            //have to set it back to null to allow it to update from the other calls
+            this.backLogEcho = null;
+            return;
         }
+
+        if(this.backLogStop != null){
+            decisionQ.add(this.backLogStop);
+
+            //have to set it back to null to allow it to update from the other calls
+            this.backLogStop = null;
+            return;
+        }
+
+
+        
+
+        
+        //if the drone finds an Ocean tile on while its facing east it will reposition itself to face west
+        if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
+            getRespectiveDirections();
+            decisionQ.add(createCommand("heading", "left"));
+            drone.setHeading("E");
+            getRespectiveDirections();
+            this.backLogAction = createCommand("heading" ,"left");
+            drone.setHeading("N");
+
+            this.backLogEcho = createCommand("echo", "front");
+
+        } 
+        //vice versa of the if statement above
+        else if(drone.getHeading().equals("N") && analyzeScan().equals(TileValue.OCEAN)){
+            getRespectiveDirections();
+            decisionQ.add(createCommand("heading", "right"));
+            drone.setHeading("E");
+            getRespectiveDirections();
+            this.backLogAction = createCommand("heading" ,"right");
+            drone.setHeading("S");
+
+            this.backLogEcho = createCommand("echo", "front");
+        }
+        //if the queue has no commands in it then pass in a fly and echo command together
+        else {
+            decisionQ.add(commands.get("fly"));
+            this.backLogAction = commands.get("scan");
+            logger.info("flew and scanned here");
+        }
+        
     }
 
-    public String bruteForceDecisionResult(){
+    public JSONObject bruteForceDecisionResult(){
         logger.info(decisionQ.peek());
-        return decisionQ.remove().toString();
+        return decisionQ.remove();
     }
 
     

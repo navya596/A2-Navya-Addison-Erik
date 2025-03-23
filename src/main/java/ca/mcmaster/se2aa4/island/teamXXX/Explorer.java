@@ -14,7 +14,7 @@ public class Explorer implements IExplorerRaid {
     private final Logger logger = LogManager.getLogger();
     private int testCounter;
     private Controller controller;
-    private String decision;
+    private JSONObject decision;
     private JSONObject response;
     private int cost;
     private String status;
@@ -43,40 +43,42 @@ public class Explorer implements IExplorerRaid {
     public String takeDecision() {
 
         if (i < 20) {
-            decision = controller.commands.get("fly").toString();
+            decision = controller.commands.get("fly");
             i++;
         }
         
         else if (i == 20) {
-            decision = controller.createCommand("echo", "right").toString();
+            decision = controller.createCommand("echo", "right");
             i++;
         }
 
         else if (i == 21){
-            decision = controller.createCommand("heading", "right").toString();
+            decision = controller.createCommand("heading", "right");
             controller.drone.setHeading("S");
             i++;
         }
 
         else if (i < 42) {
-            decision = controller.commands.get("fly").toString();
+            decision = controller.commands.get("fly");
             i++;
         }
 
         else if(i==42){
-            decision = controller.commands.get("scan").toString();
+            decision = controller.commands.get("scan");
+            logger.info("JUST scanned here");
             i++;
         }
 
 
-        else if(i<120){
+        else if(i<250){
             controller.bruteForceDecision();
             decision = controller.bruteForceDecisionResult();
             i++;
         }
 
         else{
-            decision = controller.commands.get("stop").toString();
+            decision = controller.commands.get("stop");
+            logger.info("STOP in explore ");
         }
 
         // else if (i == 38) {
@@ -101,7 +103,7 @@ public class Explorer implements IExplorerRaid {
         
 
         
-        return decision;
+        return decision.toString();
 
     }
 
@@ -118,7 +120,11 @@ public class Explorer implements IExplorerRaid {
         
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
-        //controller.getPastEcho(decision); //if the decision is echo, make sure it analyzes it correctly
+        logger.info("Current decision: {}", decision);
+        if (i > 42 && extraInfo.has("range") && extraInfo.has("found") && decision.get("action").equals("echo")) {
+            controller.analyzeEcho();
+            logger.info("going in here");
+        }
         //updates the battery level of the drone
         controller.updateDrone();
     }
