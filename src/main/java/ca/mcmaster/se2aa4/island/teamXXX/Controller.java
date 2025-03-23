@@ -233,34 +233,29 @@ public class Controller {
     }
 
     /*public void goToGroundDecisions() {
-
-        //add a null check for extra info before accessing it 
-        //be consistent with using opt safely to access json values and prevent exceptions
-        //add null check for creeks array???
-        //logic for out of range??
-        if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
-            getRespectiveDirections();
-            int range = (int) extraInfo.get("range");
-            if (range != 0) {
-                //enqueue fly to ground based on range
-                for(int i = 0; i < range; i++){
-                    decisionQ.add(commands.get("fly"));
-                }
-
-                logger.info("GOING TO GROUND IN RANGE: " + range);
-
-                
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
+        
+        getRespectiveDirections();
+        int range = (int) extraInfo.get("range");
+        if (range != 0) {
+            //enqueue fly to ground based on range
+            for(int i = 0; i < range; i++){
+                decisionQ.add(commands.get("fly"));
             }
-            else {
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
-            }
+
+            logger.info("GOING TO GROUND IN RANGE: " + range);
+
+            
+            decisionQ.add(createCommand("heading", "left"));
+            decisionQ.add(commands.get("scan"));
+        }
+        else {
+            decisionQ.add(createCommand("heading", "left"));
+            decisionQ.add(commands.get("scan"));
+        }
             
             
             
-        } else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
+         else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
             //*********if out of range we might wanna echo left or right of current heading
 
             //echo left
@@ -348,7 +343,17 @@ public class Controller {
 
         if (found.equals("GROUND") && range != 0 && analyzeScan() != TileValue.GROUND) { // no ocean means only ground
             
-            backLogStop = commands.get("stop");
+            //enqueue fly to ground based on range
+            for(int i = 0; i <= range; i++){
+                decisionQ.add(commands.get("fly"));
+            }
+    
+            logger.info("GOING TO GROUND IN RANGE: " + range);
+    
+            decisionQ.add(commands.get("scan"));
+            
+            
+            //backLogStop = commands.get("stop");
         } 
             
         
@@ -364,6 +369,7 @@ public class Controller {
                     hasOcean = true;
                     break;
                 }
+                
             }
             if (!hasOcean) { // no ocean means only ground
                 return TileValue.GROUND;
@@ -377,7 +383,7 @@ public class Controller {
         }
     }
 
-    public void traverseCoastDecision() {
+    /*public void traverseCoastDecision() {
         TileValue scanResult = analyzeScan();
         logger.info("SCAN RESULT: {}", scanResult);
         
@@ -422,7 +428,7 @@ public class Controller {
         }
 
         return decision.toString();
-    }
+    } */
 
     public boolean hasCreek(){
         if(extraInfo.has("creeks")){
@@ -465,6 +471,7 @@ public class Controller {
         
         //if the drone finds an Ocean tile on while its facing east it will reposition itself to face west
         if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
+            logger.info("Scan result: " + analyzeScan());
             getRespectiveDirections();
             decisionQ.add(createCommand("heading", "left"));
             drone.setHeading("E");
@@ -476,7 +483,8 @@ public class Controller {
 
         } 
         //vice versa of the if statement above
-        else if(drone.getHeading().equals("N") && analyzeScan().equals(TileValue.OCEAN)){
+        else if(drone.getHeading().equals("N") && (analyzeScan().equals(TileValue.OCEAN))){
+            logger.info("Scan result: " + analyzeScan());
             getRespectiveDirections();
             decisionQ.add(createCommand("heading", "right"));
             drone.setHeading("E");
@@ -488,9 +496,13 @@ public class Controller {
         }
         //if the queue has no commands in it then pass in a fly and echo command together
         else {
+            
             decisionQ.add(commands.get("fly"));
             this.backLogAction = commands.get("scan");
             logger.info("flew and scanned here");
+            logger.info("Scan result: " + analyzeScan());
+             
+            
         }
         
     }

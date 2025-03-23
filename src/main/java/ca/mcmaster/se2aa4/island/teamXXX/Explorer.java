@@ -70,9 +70,10 @@ public class Explorer implements IExplorerRaid {
         }
 
 
-        else if(i<250){
+        else if(i<360){
             controller.bruteForceDecision();
             decision = controller.bruteForceDecisionResult();
+            
             i++;
         }
 
