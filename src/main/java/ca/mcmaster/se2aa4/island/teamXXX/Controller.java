@@ -1,9 +1,12 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +27,7 @@ public class Controller {
     private Integer cost;
     private String status;
     private JSONObject extraInfo;
-    private String creek;
+    private List<String> creeks = new ArrayList<>();
     private String site;
     private boolean islandFound = false;
     
@@ -134,17 +137,10 @@ public class Controller {
             JSONArray creekArray = extraInfo.getJSONArray("creeks");
             JSONArray siteArray = extraInfo.getJSONArray("sites");
             if(creekArray.length()>0){
-                this.creek = creekArray.getString(0);
-                logger.info("IN HERE");
-                logger.info(creek);    
+                creeks.add(creekArray.getString(0));
             } else if (siteArray.length() > 0){
-                this.site = siteArray.getString(0);
-                logger.info("SITES FOUND");
+                site = siteArray.getString(0);
             }
-
-
-            logger.info(creekArray.length() == 0);
-            logger.info(creekArray.length() == 0);
         }
     }
 
@@ -152,11 +148,12 @@ public class Controller {
         return islandFound;
     }
 
-    public String getCreek(){
-        return creek;
+    public List<String> getCreek(){
+        return creeks;
     }
 
     public String getSite(){
+        //returns the creeks that we found
         return site;
     }
 
@@ -248,8 +245,8 @@ public class Controller {
 
             decisionQ.add(createCommand("echo", "front"));
         }
-        //if creek and site are not null that means that they have both been found and the mission is over
-        else if (creek != null && site != null){
+        //if there are creeks found and site is found that means that they have both been found and the mission is over
+        else if (!creeks.isEmpty() && site != null){
             decisionQ.add(commands.get("stop"));
         }
         

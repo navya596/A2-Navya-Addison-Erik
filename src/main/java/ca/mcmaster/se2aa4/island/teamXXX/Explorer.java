@@ -6,6 +6,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import java.util.List;
+import java.util.ArrayList;
 
 import eu.ace_design.island.bot.IExplorerRaid;
 
@@ -72,12 +74,16 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String deliverFinalReport() {
-        String creek = controller.getCreek();
+        List<String> creek = controller.getCreek();
         String site = controller.getSite();
-        logger.info("Creek found {}", creek);
+        for(int i = 0; i<creek.size(); i++){
+            logger.info("Creek found {}", creek.get(i));
+        }
+        
         logger.info("Site found {}", site);
 
-        return creek;
+        //returns the last added creek
+        return creek.remove(creek.size()-1);
     }
 
 }
