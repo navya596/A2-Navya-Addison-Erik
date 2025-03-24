@@ -29,6 +29,7 @@ public class Controller {
     private JSONObject extraInfo;
     private int runs;
     private String creek;
+    private String site;
     private JSONObject backLogEcho;
     private JSONObject backLogStop;
     
@@ -119,71 +120,6 @@ public class Controller {
         return command;
 
     }
-
-    /*public void getPastEcho(String previousDecision){
-
-        JSONObject jsonObject = new JSONObject(previousDecision);
-        String pastState = jsonObject.getString("action");
-
-        if ("echo".equals(pastState)) { 
-            JSONObject parameters = jsonObject.getJSONObject("parameters");
-            String previousDirection = parameters.getString("direction");            
-            // Update current respective directions
-            getRespectiveDirections(); 
-            
-            //If ground was found for the previous echo command
-            if ("GROUND".equals(extraInfo.getString("found"))) {
-                //if current direction's left is same as previous echo direction (want to make sure ground is always on the left)
-                if (left.equals(parameters.getString("direction")) ) {
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(commands.get("fly"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    }   
-                } else if (front.equals(parameters.getString("direction")) ) { 
-
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(createCommand("heading", "right"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    } 
-                } else if (right.equals(parameters.getString("direction")) ) {
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(createCommand("heading", "left"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    } 
-    
-                }
-            } else if ("OUT_OF_RANGE".equals(extraInfo.getString("found"))) {
-                //echo in next direction (front -> left -> right by convention)
-                // Determine if previous echo was done on respective left, right, or front
-                if (previousDirection.equals(left)) {
-                    decisionQ.add(createCommand("echo", "right"));
-                } else if (previousDirection.equals(front)) {
-                    decisionQ.add(createCommand("echo", "left"));
-                }
-                else if (previousDirection.equals(right)) {
-                    drone.changeHeading(false); //try changing heading if all echo directions were out of range
-                    decisionQ.add(createCommand("heading", "left"));
-    
-                }
-            }
-        }                   
-                
-        
-            
-            
-    } */
 
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
@@ -427,20 +363,31 @@ public class Controller {
         return decision.toString();
     }
 
-    public void findCreek(){
-        if(extraInfo.has("biomes") && extraInfo.has("creeks")){
-            JSONArray temp = extraInfo.getJSONArray("creeks");
-            if(temp.length()>0){
-                this.creek = temp.getString(0);
+    public void findCreekOrSite(){
+        if(extraInfo.has("biomes") && extraInfo.has("creeks") && extraInfo.has("sites")){
+            JSONArray creekArray = extraInfo.getJSONArray("creeks");
+            JSONArray siteArray = extraInfo.getJSONArray("sites");
+            if(creekArray.length()>0){
+                this.creek = creekArray.getString(0);
                 logger.info("IN HERE");
                 logger.info(creek);    
+            } else if (siteArray.length() > 0){
+                this.site = siteArray.getString(0);
+                logger.info("SITES FOUND");
             }
-            logger.info(temp.length() == 0);
+
+
+            logger.info(creekArray.length() == 0);
+            logger.info(creekArray.length() == 0);
         }
     }
 
     public String getCreek(){
         return creek;
+    }
+
+    public String getSite(){
+        return site;
     }
 
     public boolean wasEchoCalled(){
@@ -525,8 +472,9 @@ public class Controller {
         //queue has no commands in it then pass in a fly and echo command together
         else {
 
-            findCreek();
+            findCreekOrSite();
             logger.info(this.creek);
+            logger.info(this.site);
 
             decisionQ.add(commands.get("fly"));
             decisionQ.add(commands.get("scan"));

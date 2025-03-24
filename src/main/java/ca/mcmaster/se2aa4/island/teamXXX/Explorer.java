@@ -129,7 +129,9 @@ public class Explorer implements IExplorerRaid {
     @Override
     public String deliverFinalReport() {
         String creek = controller.getCreek();
+        String site = controller.getSite();
         logger.info(creek);
+        logger.info(site);
 
         return creek;
     }
