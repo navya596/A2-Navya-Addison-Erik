@@ -50,17 +50,19 @@ public class Drone {
     //Change heading 
     public void changeHeading (Boolean isleftturn) {
         if (isleftturn) {
-            if (heading == "E") heading = "N";
-            else if (heading == "S") heading = "E";
-            else if (heading == "W") heading = "S";
-            else if (heading == "N") heading = "W";
+            if (heading.equals("E")) heading = "N";
+            else if (heading.equals("S")) heading = "E";
+            else if (heading.equals("W")) heading = "S";
+            else if (heading.equals("N")) heading = "W";
         } else {
-            if (heading == "E") heading = "S";
-            else if (heading == "S") heading = "W";
-            else if (heading == "W") heading = "N";
-            else if (heading == "N") heading = "E";
+            if (heading.equals("E")) heading = "S";
+            else if (heading.equals("S")) heading = "W";
+            else if (heading.equals("W")) heading = "N";
+            else if (heading.equals("N")) heading = "E";
         }
     }
+
+    
 
     //primitive move forward
     public void move() {

@@ -326,52 +326,6 @@ public class Controller {
         }
     }
 
-    public void traverseCoastDecision() {
-        TileValue scanResult = analyzeScan();
-        logger.info("SCAN RESULT: {}", scanResult);
-        
-        if (scanResult == TileValue.GROUND) {
-            logger.info(drone.getHeading());
-            decisionQ.add(createCommand("heading", "right"));
-            decisionQ.add(commands.get("scan"));
-        } else if (scanResult == TileValue.OCEAN) {
-            decisionQ.add(createCommand("heading", "left"));
-            decisionQ.add(commands.get("scan"));
-            decisionQ.add(createCommand("echo", "front"));
-        } else if (scanResult == TileValue.COAST) {
-            decisionQ.add(commands.get("fly"));
-            decisionQ.add(commands.get("scan"));
-        } else {
-            decisionQ.add(commands.get("stop"));
-            logger.info("STOP 1");
-        }
-        logger.info("DECISION QUEUE: {}", decisionQ);
-        logger.info("Added coast traversal decisions");
-    }
-
-    public String traverseCoast() {
-        JSONObject decision;
-        logger.info("traversing coast");
-        logger.info("DECISION QUEUE: {}", decisionQ);
-        if (decisionQ.isEmpty()) {
-            logger.info("decision queue empty. Update decisions");
-            traverseCoastDecision();
-            decision = decisionQ.remove();
-            
-        } else {
-            logger.info("scanning");
-            decision = decisionQ.remove();
-        }
-        
-        getRespectiveDirections();
-        if((decision.get("action")).equals("heading")){
-        
-            String newDirection = decision.getJSONObject("parameters").getString("direction");
-            drone.setHeading(newDirection);
-        }
-
-        return decision.toString();
-    }
 
     public void findCreek(){
         if(extraInfo != null && extraInfo.has("creeks")){
@@ -388,13 +342,16 @@ public class Controller {
             return false;
         }
     }
-
+    private boolean isXMappingStarted = false;
+    private boolean isXMappingDone = false;
+    private boolean isYMappingStarted = false;
+    private boolean isYMappingDone = false;
+    private boolean isInitialCorrectionDone = false;
+    private int x_len = 0;
+    private int y_len = 0;
 
 
     public void bruteForceDecision(){
-        //if two items are added to the Queue one after another we won't be able to properly depict which action happens when
-        //the backLogAction ensures that the next decision made will be off of the correct action
-
         logger.info("CHECK BEFORE ANY LOGIC");
         logger.info(drone.getHeading());
         //if(backLogAction != null){
@@ -404,85 +361,67 @@ public class Controller {
             //decisionQ.add(backLogAction.remove());
         } 
 
-        else if(wasEchoCalled()){
-            int range = (int) extraInfo.get("range");
-            String found = (String) extraInfo.get("found");
-
-            //since echo is going to be called after the u-turn
-            //if the echo range is 0 that means the tile in front of us is still ground so we can call fly and scan
-            if(range == 0 && found.equals("GROUND")){
-                logger.info("WAS CALLED WHEN GROUND and range == 0");
+        if (!isXMappingStarted) {
+            if (extraInfo.get("found").equals("GROUND")) {
+                isXMappingStarted = true;
+            } else {
                 decisionQ.add(commands.get("fly"));
-                decisionQ.add(commands.get("scan"));
-            } else if (found.equals("GROUND") && range > 0){
-
-                
-                for(int i = 0; i<range; i++){
-                    decisionQ.add(commands.get("fly"));
-                    //backLogAction.add(commands.get("fly"));
-                }
+                decisionQ.add(createCommand("echo", "right"));
             }
-
-            //if no ground is detected after the u-turn then something went wrong
-            else{
-                decisionQ.add(commands.get("stop"));
+        } else if (!isXMappingDone) {
+            
+            if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
+                decisionQ.add(createCommand("heading", "right"));
+                drone.changeHeading(false);
+                getRespectiveDirections();
+                decisionQ.add(createCommand("echo", "right"));
+                isXMappingDone = true;
+            }  else {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(createCommand("echo", "right"));
+                x_len++;
             }
-        }
-        
-        //if the drone finds an Ocean tile on while its facing east it will reposition itself to face west
-        else if(drone.getHeading().equals("S") && analyzeScan().equals(TileValue.OCEAN)){
-            
-            decisionQ.add(createCommand("heading", "left"));
-            drone.setHeading("E");
-           
-            decisionQ.add(createCommand("heading", "left"));
-            
-            drone.setHeading("N");
-            decisionQ.add(createCommand("echo", "front"));
-
-        } 
-        //vice versa of the if statement above
-        else if(drone.getHeading().equals("N") && analyzeScan().equals(TileValue.OCEAN)){
-            
+        } else if (!isYMappingStarted) {
+            if (extraInfo.get("found").equals("GROUND")) {
+                isYMappingStarted = true;
+            }   else {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(createCommand("echo", "right"));
+            }
+        } else if (!isYMappingDone) {
+            if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
+                isYMappingDone = true;
+            }  else {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(createCommand("echo", "right"));
+                y_len++;
+            }
+        } else if (!isInitialCorrectionDone) {
             decisionQ.add(createCommand("heading", "right"));
-            drone.setHeading("E");
-
+            drone.changeHeading(false);
+            getRespectiveDirections();
             decisionQ.add(createCommand("heading", "right"));
-            drone.setHeading("S");
-
-            decisionQ.add(createCommand("echo", "front"));
-        }
-        
-        //queue has no commands in it then pass in a fly and echo command together
-        else {
-
-            //findCreek();
-            logger.info(this.creek);
-
+            drone.changeHeading(false);
+            getRespectiveDirections();
             decisionQ.add(commands.get("fly"));
             decisionQ.add(commands.get("scan"));
-            logger.info("flew and scanned here");
+            
+            //corrects the x and y lengths of island (algorithm counts one extra time)
+            x_len--;
+            y_len--;
+            isInitialCorrectionDone = true;
+        } else {
+            decisionQ.add(commands.get("stop"));
         }
-        
     }
-
-    public JSONObject bruteForceDecisionResult(){
     
+    public JSONObject bruteForceDecisionResult(){
+        if (decisionQ.isEmpty()) {
+            bruteForceDecision();
+        } 
         logger.info(decisionQ.peek());
         return decisionQ.remove();
     }
-
-    
-    
-
-    //if creek is NOT found
-        //if ocean only
-            //turn left
-            //go in
-            //turn right
-            //
-    //else creek is found
-        //stop mission
 
     public void updateDrone(){
         //updates battery after a decision is made

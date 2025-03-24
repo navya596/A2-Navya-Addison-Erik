@@ -22,7 +22,7 @@ public class Explorer implements IExplorerRaid {
     private boolean foundGround = false;
     private boolean goingToGround = false;
     private boolean startedBruteForce = false;
-    private int i = 0;
+    int i = 0;
 
     @Override
     public void initialize(String s) {
@@ -44,6 +44,7 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
+        /* 
         if (!foundGround && !goingToGround) {
             decision = controller.executeFindGroundDecisions();
         }
@@ -59,6 +60,14 @@ public class Explorer implements IExplorerRaid {
         } 
         // If already going to ground, execute goToGroundDecisions()
         else if (foundGround && goingToGround) {
+            
+            }
+        }
+        */  
+      
+        controller.bruteForceDecision();
+        decision = controller.bruteForceDecisionResult();
+            /*
             if (!startedBruteForce) {
                 // Execute the ground decision logic and trigger brute force if needed
                 decision = controller.executeGoToGroundDecisions();
@@ -73,17 +82,9 @@ public class Explorer implements IExplorerRaid {
                 if (decision == null) {
                     controller.bruteForceDecision();
                 }
+        
             }
-        }
-        
-        
-
-        
-        
-        
-        
-        
-        
+            
 
         
         // controller.executeFindGroundDecisions();
@@ -146,9 +147,6 @@ public class Explorer implements IExplorerRaid {
         //     decision = controller.commands.get("stop").toString();
         // }
         
-        
-        
-
         
         return decision.toString();
 
