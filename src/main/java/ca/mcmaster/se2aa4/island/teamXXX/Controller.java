@@ -7,17 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class Controller {
-    //attributes
-    
-    //Just added a logger to verify logic
-    private final Logger logger = LogManager.getLogger();
 
     protected Drone drone;
     protected Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
@@ -92,9 +85,6 @@ public class Controller {
         //Select appropriate direction based on passed directionType
         if ("front".equals(directionType)) {
             parameters.put("direction", front);
-
-            logger.info("DIRECTION OF FRONT");
-            logger.info(front);
         }
         else if ("left".equals(directionType)) {
             parameters.put("direction", left);
@@ -261,13 +251,11 @@ public class Controller {
 
             decisionQ.add(commands.get("fly"));
             decisionQ.add(commands.get("scan"));
-            logger.info("flew and scanned here");
+            
         }
     }
 
     public JSONObject getActionMade(){
-    
-        logger.info(decisionQ.peek());
         return decisionQ.remove();
     }
 
