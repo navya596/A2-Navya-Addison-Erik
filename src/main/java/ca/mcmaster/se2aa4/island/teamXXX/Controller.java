@@ -28,6 +28,17 @@ public class Controller {
     private JSONObject extraInfo;
     private List<String> creeks = new ArrayList<>();
     private String site;
+    private boolean isXMappingStarted = false;
+    private boolean isXMappingDone = false;
+    private boolean isYMappingStarted = false;
+    private boolean isYMappingDone = false;
+    private boolean isInitialCorrectionDone = false;
+    private boolean isTraversingUp = true;
+    private boolean echoCheck = false;
+    private int x_len = 0;
+    private int y_len = 0;
+    private int xCoord;
+    private int yCoord;
 
     private Queue<JSONObject> decisionQ = new LinkedList<>();
 
@@ -183,20 +194,7 @@ public class Controller {
             return false;
         }
     }
-    private boolean isXMappingStarted = false;
-    private boolean isXMappingDone = false;
-    private boolean isYMappingStarted = false;
-    private boolean isYMappingDone = false;
-    private boolean isInitialCorrectionDone = false;
-    private boolean isTraversingUp = true;
-    private boolean echoCheck = false;
-    private int x_len = 0;
-    private int y_len = 0;
-    private int xCoord;
-    private int yCoord;
     
-
-
     public void bruteForceDecision(){
         if(!decisionQ.isEmpty()){
             return;
