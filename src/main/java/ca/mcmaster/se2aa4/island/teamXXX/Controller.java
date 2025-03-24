@@ -356,10 +356,12 @@ public class Controller {
     private boolean isYMappingDone = false;
     private boolean isInitialCorrectionDone = false;
     private boolean isTraversingUp = true;
+    private boolean echoCheck = false;
     private int x_len = 0;
     private int y_len = 0;
     private int xCoord;
     private int yCoord;
+    
 
 
     public void bruteForceDecision(){
@@ -438,23 +440,24 @@ public class Controller {
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
             } else if (wasEchoCalled()) {
-                for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
-                    decisionQ.add(commands.get("fly"));
-                    yCoord--;
-                }
-                decisionQ.add(commands.get("scan"));
-            } else if (wasScanCalled()) {
-                if (analyzeScan() == TileValue.OCEAN) {
+                if (echoCheck && extraInfo.get("found").equals("OUT_OF_RANGE")) {
                     while (yCoord > 1) {
                         decisionQ.add(commands.get("fly"));
                         yCoord--;
-                    }
+                    } 
+                    echoCheck = false;
                 } else {
-                    decisionQ.add(commands.get("fly"));
+                    for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
+                        decisionQ.add(commands.get("fly"));
+                        yCoord--;
+                    }
                     decisionQ.add(commands.get("scan"));
-                
-                    yCoord--;
                 }
+            } else if (wasScanCalled() && analyzeScan() == TileValue.OCEAN) {
+                
+                decisionQ.add(createCommand("echo", "front"));
+                echoCheck = true;
+                
             }
             
             
@@ -476,23 +479,23 @@ public class Controller {
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
             } else if (wasEchoCalled()) {
-                for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
-                    decisionQ.add(commands.get("fly"));
-                    yCoord++;
-                }
-                decisionQ.add(commands.get("scan"));
-            } else if (wasScanCalled()) {
-                if (analyzeScan() == TileValue.OCEAN) {
+                if (echoCheck && extraInfo.get("found").equals("OUT_OF_RANGE")) {
                     while (yCoord < y_len) {
                         decisionQ.add(commands.get("fly"));
                         yCoord++;
-                    }
+                    } 
+                    echoCheck = false;
                 } else {
-                    decisionQ.add(commands.get("fly"));
+                    for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
+                        decisionQ.add(commands.get("fly"));
+                        yCoord++;
+                    }
                     decisionQ.add(commands.get("scan"));
-                
-                    yCoord++;
                 }
+                
+            } else if (wasScanCalled() && analyzeScan() == TileValue.OCEAN) {
+                decisionQ.add(createCommand("echo", "front"));
+                echoCheck = true;
             }
             else {
                 decisionQ.add(commands.get("fly"));
