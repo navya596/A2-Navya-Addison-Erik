@@ -74,6 +74,12 @@ public class Explorer implements IExplorerRaid {
     public String deliverFinalReport() {
         List<String> creeks = controller.getCreeks();
         String site = controller.getSite();
+
+        for(int i = 0; i<creeks.size(); i++){
+            logger.info("CREEK FOUND {}", creeks.get(i));
+        }
+        logger.info("Site found {}", site); 
+
         if (creeks.isEmpty()){
             return "no creek found";
         }
@@ -81,11 +87,6 @@ public class Explorer implements IExplorerRaid {
         if(site == null){
             return "no emergency site found";
         }
-
-        for(int i = 0; i<creeks.size(); i++){
-            logger.info("CREEK FOUND {}", creeks.get(i));
-        }
-        logger.info("Site found {}", site); 
 
         return creeks.get(creeks.size()-1);
     }

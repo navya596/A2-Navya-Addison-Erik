@@ -49,9 +49,6 @@ public class Controller {
         commands.put("fly", new JSONObject().put("action", "fly"));
         commands.put("stop", new JSONObject().put("action", "stop"));
         commands.put("scan", new JSONObject().put("action", "scan"));
-
-        
-
     }
 
     //returns the information from the action that was selected and called in Explorer.takeDecision()
@@ -117,7 +114,7 @@ public class Controller {
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
     public boolean findGroundDecisions(){
-        getRespectiveDirections();
+        
         //If past result was echo, and ground was found, return true to explorer
         if (extraInfo != null && extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
             logger.info("ADDED HEADING HERE");
@@ -200,6 +197,17 @@ public class Controller {
             return;
         } 
 
+        //checks battery levelbefore doing any of the commands
+        if(drone.getBatteryLevel() < 50){
+            decisionQ.add(commands.get("stop"));
+            return;
+        }
+
+        if(!creeks.isEmpty() && site != null){
+            decisionQ.add(commands.get("stop"));
+            return;
+        }
+
         if (!isXMappingStarted) {
             if (extraInfo.get("found").equals("GROUND")) {
                 isXMappingStarted = true;
@@ -212,7 +220,7 @@ public class Controller {
             if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
                 decisionQ.add(createCommand("heading", "right"));
                 drone.changeHeading(false);
-                getRespectiveDirections();
+                
                 decisionQ.add(createCommand("echo", "right"));
                 isXMappingDone = true;
             }  else {
@@ -330,9 +338,7 @@ public class Controller {
                 
                 yCoord++;
             }
-        } else if(!creeks.isEmpty() && site != null){
-            decisionQ.add(commands.get("stop"));
-        }        
+        }
         else {
             decisionQ.add(commands.get("stop"));
         }
