@@ -439,6 +439,10 @@ public class Controller {
         }
     }
 
+    public String getCreek(){
+        return creek;
+    }
+
     public boolean wasEchoCalled(){
         if(extraInfo.has("range") && extraInfo.has("found")){
             return true;
