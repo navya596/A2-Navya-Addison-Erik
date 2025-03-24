@@ -1,5 +1,7 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -17,9 +19,6 @@ public class Controller {
     private final Logger logger = LogManager.getLogger();
 
     protected Drone drone; 
-    private String pastState; //need a past state verifying to get to an island
-    private Navigator navigator; 
-    private String[] currentState = new String[2];
     protected Map<String, JSONObject> commands; //Keys will be used to return command as a JSON object back to acknowledge results
     private String front;
     private String left;
@@ -27,19 +26,14 @@ public class Controller {
     private Integer cost;
     private String status;
     private JSONObject extraInfo;
-    private int runs;
-    private String creek;
-    private JSONObject backLogEcho;
-    private JSONObject backLogStop;
-    
-    //changed backLogAction into a Queue so that we can store multiple actions at once
-    private Queue<JSONObject> backLogAction = new LinkedList<>();
+    private List<String> creeks = new ArrayList<>();
+    private String site;
+
     private Queue<JSONObject> decisionQ = new LinkedList<>();
 
     //Constructor
     public Controller(Drone drone) {
         this.drone = drone;
-        this.runs = 0;
         commands = new HashMap<>();
         commands.put("fly", new JSONObject().put("action", "fly"));
         commands.put("stop", new JSONObject().put("action", "stop"));
@@ -55,13 +49,6 @@ public class Controller {
         this.status = status;
         this.extraInfo = extraInfo; 
     
-    }
-
-    //getCurrentstate returns String[] where first index is battery and second index is heading
-    public String[] getCurrentState() {
-        currentState[0] = String.valueOf(drone.getBatteryLevel());
-        currentState[1] = drone.getHeading().toString();
-        return currentState;
     }
 
     //getRespectiveDirections() gets drone's current heading and sets its respective front, left, and right directions
@@ -91,9 +78,8 @@ public class Controller {
     dynamically creates the respective heading or echo command based on 
     current respective directions */
     protected JSONObject createCommand(String action, String directionType) {
-        //get respective direction
         getRespectiveDirections();
-        //create put action in json ojectt
+        //create put action in json oject
         JSONObject command = new JSONObject();
         command.put("action", action);
 
@@ -103,9 +89,6 @@ public class Controller {
         //Select appropriate direction based on passed directionType
         if ("front".equals(directionType)) {
             parameters.put("direction", front);
-
-            logger.info("DIRECTION OF FRONT");
-            logger.info(front);
         }
         else if ("left".equals(directionType)) {
             parameters.put("direction", left);
@@ -119,71 +102,6 @@ public class Controller {
         return command;
 
     }
-
-    /*public void getPastEcho(String previousDecision){
-
-        JSONObject jsonObject = new JSONObject(previousDecision);
-        String pastState = jsonObject.getString("action");
-
-        if ("echo".equals(pastState)) { 
-            JSONObject parameters = jsonObject.getJSONObject("parameters");
-            String previousDirection = parameters.getString("direction");            
-            // Update current respective directions
-            getRespectiveDirections(); 
-            
-            //If ground was found for the previous echo command
-            if ("GROUND".equals(extraInfo.getString("found"))) {
-                //if current direction's left is same as previous echo direction (want to make sure ground is always on the left)
-                if (left.equals(parameters.getString("direction")) ) {
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(commands.get("fly"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    }   
-                } else if (front.equals(parameters.getString("direction")) ) { 
-
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(createCommand("heading", "right"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    } 
-                } else if (right.equals(parameters.getString("direction")) ) {
-                    if (extraInfo.has("range") && extraInfo.get("range") instanceof Integer) {
-                        if (extraInfo.getInt("range") == 0) {
-                            decisionQ.add(createCommand("heading", "left"));
-                        }
-                    }
-                    else { //go to ground if range is not close enough
-                        goToGroundDecisions();
-                    } 
-    
-                }
-            } else if ("OUT_OF_RANGE".equals(extraInfo.getString("found"))) {
-                //echo in next direction (front -> left -> right by convention)
-                // Determine if previous echo was done on respective left, right, or front
-                if (previousDirection.equals(left)) {
-                    decisionQ.add(createCommand("echo", "right"));
-                } else if (previousDirection.equals(front)) {
-                    decisionQ.add(createCommand("echo", "left"));
-                }
-                else if (previousDirection.equals(right)) {
-                    drone.changeHeading(false); //try changing heading if all echo directions were out of range
-                    decisionQ.add(createCommand("heading", "left"));
-    
-                }
-            }
-        }                   
-                
-        
-            
-            
-    } */
 
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
@@ -212,101 +130,25 @@ public class Controller {
         }
     }
 
-    //empties queue for ground decisions
-    public JSONObject executeFindGroundDecisions(){
-        if (!decisionQ.isEmpty()) {
-            //Check if the drone batterylevel is decreasing after each updateDrone() call
-            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
-
-            JSONObject decision = decisionQ.remove();
-
-            //once we get to the heading decision it needs to change the heading of the drone accordingly
-            getRespectiveDirections();
-            if((decision.get("action")).equals("heading")){
-            
-                String newDirection = decision.getJSONObject("parameters").getString("direction");
-                drone.setHeading(newDirection);
-            }
-
-            //check if the direction was changed 
-            logger.info("New heading of the drone is {}", drone.getHeading()); 
-
-            return decision;
-        }
-        
-        return null;
-    }
-
-    public void goToGroundDecisions() {
-        
-
-        getRespectiveDirections();
-
-        int range = (int) extraInfo.get("range");
-        if (range != 0) {
-            //enqueue fly to ground based on range
-            for(int i = 0; i < range; i++){
-                decisionQ.add(commands.get("fly"));
-            }
-
-            logger.info("GOING TO GROUND IN RANGE: " + range);
-
-            decisionQ.add(commands.get("scan"));
-    
-            //decisionQ.add(commands.get("stop"));
-        }
-    
-        
-        
-    }
-
-    //empties queue for ground decisions
-    public JSONObject executeGoToGroundDecisions(){
-        if (!decisionQ.isEmpty()) {
-            //Check if the drone batterylevel is decreasing after each updateDrone() call
-            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
-
-            JSONObject decision = decisionQ.remove();
-
-            //once we get to the heading decision it needs to change the heading of the drone accordingly
-            getRespectiveDirections();
-            if((decision.get("action")).equals("heading")){
-            
-                String newDirection = decision.getJSONObject("parameters").getString("direction");
-                drone.setHeading(newDirection);
-            }
-
-            //check if the direction was changed 
-            logger.info("New heading of the drone is {}", drone.getHeading()); 
-
-            return decision;
-        }
-        else { //means queue is empty, all steps have been performed
-            //go back to explore class
-            
-
-            return null;
-        }
-        
-    }
-
-    public void analyzeEcho() {
-        
-        int range = extraInfo.getInt("range");
-        String found = (String) extraInfo.get("found");
-
-        if (found.equals("GROUND") && range != 0 && analyzeScan() != TileValue.GROUND) { // no ocean means only ground
-            
-            backLogStop = commands.get("stop");
-        } 
-            
-        
-    } 
-
     public TileValue analyzeScan() {
         if (extraInfo.has("biomes")) {
             JSONArray biomesFound = extraInfo.getJSONArray("biomes");
+            JSONArray creekFound = extraInfo.getJSONArray("creeks");
+            JSONArray siteFound = extraInfo.getJSONArray("sites");
             boolean hasOcean = false;
+
+            //checks if the tile is a creek if it is it adds it the value found to the creek list
+            if(!creekFound.isEmpty()){
+                creeks.add(creekFound.getString(0));
+                return TileValue.CREEK;
+            }
+
+            //checks if the tile is a site if it is it sets the value found
+            if(!siteFound.isEmpty()){
+                site = siteFound.getString(0);
+                return TileValue.SITE;
+            }
+
             for (int i = 0; i < biomesFound.length(); i++) {
                 String biome = biomesFound.getString(i).toUpperCase();
                 if (biome.contains("OCEAN")) {
@@ -323,15 +165,6 @@ public class Controller {
             }
         } else {
             return TileValue.NODATA;
-        }
-    }
-
-
-    public void findCreek(){
-        if(extraInfo != null && extraInfo.has("creeks")){
-            JSONArray creekKey = extraInfo.getJSONArray("creeks");
-            logger.info(creekKey.toString());
-            this.creek = creekKey.toString();
         }
     }
 
@@ -365,13 +198,8 @@ public class Controller {
 
 
     public void bruteForceDecision(){
-        logger.info("CHECK BEFORE ANY LOGIC");
-        logger.info(drone.getHeading());
-        //if(backLogAction != null){
         if(!decisionQ.isEmpty()){
             return;
-            //enqueues the action from the backLog to the decision we want to happen next
-            //decisionQ.add(backLogAction.remove());
         } 
 
         if (!isXMappingStarted) {
@@ -412,10 +240,10 @@ public class Controller {
         } else if (!isInitialCorrectionDone) {
             decisionQ.add(createCommand("heading", "right"));
             drone.changeHeading(false);
-            getRespectiveDirections();
+            
             decisionQ.add(createCommand("heading", "right"));
             drone.changeHeading(false);
-            getRespectiveDirections();
+            
             decisionQ.add(commands.get("fly"));
             decisionQ.add(createCommand("echo", "front"));
             
@@ -432,10 +260,10 @@ public class Controller {
             if (yCoord == 1) {
                 decisionQ.add(createCommand("heading", "left"));
                 drone.changeHeading(true);
-                getRespectiveDirections();
+                
                 decisionQ.add(createCommand("heading", "left"));
                 drone.changeHeading(true);
-                getRespectiveDirections();
+                
                 decisionQ.add(createCommand("echo", "front"));
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
@@ -460,7 +288,8 @@ public class Controller {
                 
             }
             
-            
+            //if the tile was marked as a Creek or a Site it captured
+            //as long as the scan result is not an ocean we can continue to fly and scan the island
             else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(commands.get("scan"));
@@ -471,10 +300,10 @@ public class Controller {
             if (yCoord == y_len) {
                 decisionQ.add(createCommand("heading", "right"));
                 drone.changeHeading(false);
-                getRespectiveDirections();
+                
                 decisionQ.add(createCommand("heading", "right"));
                 drone.changeHeading(false);
-                getRespectiveDirections();
+
                 decisionQ.add(createCommand("echo", "front"));
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
@@ -503,6 +332,8 @@ public class Controller {
                 
                 yCoord++;
             }
+        } else if(!creeks.isEmpty() && site != null){
+            decisionQ.add(commands.get("stop"));
         }        
         else {
             decisionQ.add(commands.get("stop"));
@@ -515,6 +346,14 @@ public class Controller {
         } 
         logger.info(decisionQ.peek());
         return decisionQ.remove();
+    }
+
+    public String getSite(){
+        return site;
+    }
+
+    public List<String> getCreeks(){
+        return creeks;
     }
 
     public void updateDrone(){

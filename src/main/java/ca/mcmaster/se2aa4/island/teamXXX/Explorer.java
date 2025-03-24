@@ -6,13 +6,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import java.util.List;
+import java.util.ArrayList;
 
 import eu.ace_design.island.bot.IExplorerRaid;
 
 public class Explorer implements IExplorerRaid {
 
     private final Logger logger = LogManager.getLogger();
-    private int testCounter;
     private Controller controller;
     private JSONObject decision;
     private JSONObject response;
@@ -20,9 +21,6 @@ public class Explorer implements IExplorerRaid {
     private String status;
     private JSONObject extraInfo;
     private boolean foundGround = false;
-    private boolean goingToGround = false;
-    private boolean startedBruteForce = false;
-    int i = 0;
 
     @Override
     public void initialize(String s) {
@@ -44,108 +42,9 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
-        /* 
-        if (!foundGround && !goingToGround) {
-            decision = controller.executeFindGroundDecisions();
-        }
-        if (decision == null) {
-            foundGround = controller.findGroundDecisions();
-            decision = controller.executeFindGroundDecisions();
-        }
-        //if found ground is true and the queue is empty
-        if (foundGround && !goingToGround) { // Ensure we only execute this once
-            logger.info("Found ground, starting goToGroundDecisions()");
-            controller.goToGroundDecisions();
-            goingToGround = true; // Mark that we've started going to ground
-        } 
-        // If already going to ground, execute goToGroundDecisions()
-        else if (foundGround && goingToGround) {
-            
-            }
-        }
-        */  
       
         controller.bruteForceDecision();
         decision = controller.bruteForceDecisionResult();
-            /*
-            if (!startedBruteForce) {
-                // Execute the ground decision logic and trigger brute force if needed
-                decision = controller.executeGoToGroundDecisions();
-        
-                if (decision == null) {
-                    controller.bruteForceDecision();
-                    startedBruteForce = true;
-                }
-            } else {
-                // Handle brute force result or continue brute force
-                decision = controller.bruteForceDecisionResult();
-                if (decision == null) {
-                    controller.bruteForceDecision();
-                }
-        
-            }
-            
-
-        
-        // controller.executeFindGroundDecisions();
-        // if (decision.equals("queue empty")) { //means ground has been found and queue is empty
-        //     //must enqueue decisions to go to ground
-        //     controller.goToGroundDecisions();
-        //     decision = controller.executeFindGroundDecisions();
-        // }
-
-        //gotoground
-        //scan
-        //brute search
-        /* 
-        if (i < 20) {
-            decision = controller.commands.get("fly");
-            i++;
-        }
-        
-        else if (i == 20) {
-            decision = controller.createCommand("echo", "right");
-            i++;
-        }
-
-        else if (i == 21){
-            decision = controller.createCommand("heading", "right");
-            controller.drone.setHeading("S");
-            i++;
-        }
-
-        else if (i < 42) {
-            decision = controller.commands.get("fly");
-            i++;
-        }
-
-        else if(i==42){
-            decision = controller.commands.get("scan");
-            logger.info("JUST scanned here");
-            i++;
-        }
-
-
-        else if(i<500){
-            controller.bruteForceDecision();
-            decision = controller.bruteForceDecisionResult();
-            
-            i++;
-        } */
-
-        
-
-        // else if (i == 38) {
-        //     decision = controller.commands.get("scan").toString();
-        //     i++;
-        // }
-
-        // else if (i > 37 && i != 200) {
-        //     decision = controller.traverseCoast().toString();
-        //     i++;
-        // } else if (i == 200) {
-        //     decision = controller.commands.get("stop").toString();
-        // }
         
         
         return decision.toString();
@@ -173,7 +72,22 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String deliverFinalReport() {
-        return "no creek found";
+        List<String> creeks = controller.getCreeks();
+        String site = controller.getSite();
+        if (creeks.isEmpty()){
+            return "no creek found";
+        }
+
+        if(site == null){
+            return "no emergency site found";
+        }
+
+        for(int i = 0; i<creeks.size(); i++){
+            logger.info("CREEK FOUND {}", creeks.get(i));
+        }
+        logger.info("Site found {}", site); 
+
+        return creeks.get(creeks.size()-1);
     }
 
 }
