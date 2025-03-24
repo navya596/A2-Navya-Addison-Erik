@@ -21,7 +21,7 @@ public class Explorer implements IExplorerRaid {
     private JSONObject extraInfo;
     private boolean foundGround = false;
     private boolean goingToGround = false;
-    private boolean startedBruteForce = false;
+    private boolean doneBruteForce = false;
     int i = 0;
 
     @Override
@@ -65,8 +65,15 @@ public class Explorer implements IExplorerRaid {
         }
         */  
       
-        controller.bruteForceDecision();
-        decision = controller.bruteForceDecisionResult();
+        doneBruteForce = controller.bruteForceDecision();
+        logger.info("Done brute force status: " + doneBruteForce);
+        if (doneBruteForce) {
+            controller.goToGroundDecisions();
+            decision = controller.bruteForceDecisionResult();
+        }
+        else {
+            decision = controller.bruteForceDecisionResult();
+        }
             /*
             if (!startedBruteForce) {
                 // Execute the ground decision logic and trigger brute force if needed

@@ -31,7 +31,9 @@ public class Controller {
     private String creek;
     private JSONObject backLogEcho;
     private JSONObject backLogStop;
-    
+    private boolean goToGroundStarted = false;
+    private boolean adjustingAtGround = false;
+
     //changed backLogAction into a Queue so that we can store multiple actions at once
     private Queue<JSONObject> backLogAction = new LinkedList<>();
     private Queue<JSONObject> decisionQ = new LinkedList<>();
@@ -237,28 +239,7 @@ public class Controller {
         return null;
     }
 
-    public void goToGroundDecisions() {
-        
 
-        getRespectiveDirections();
-
-        int range = (int) extraInfo.get("range");
-        if (range != 0) {
-            //enqueue fly to ground based on range
-            for(int i = 0; i < range; i++){
-                decisionQ.add(commands.get("fly"));
-            }
-
-            logger.info("GOING TO GROUND IN RANGE: " + range);
-
-            decisionQ.add(commands.get("scan"));
-    
-            //decisionQ.add(commands.get("stop"));
-        }
-    
-        
-        
-    }
 
     //empties queue for ground decisions
     public JSONObject executeGoToGroundDecisions(){
@@ -351,12 +332,12 @@ public class Controller {
     private int y_len = 0;
 
 
-    public void bruteForceDecision(){
+    public boolean bruteForceDecision(){
         logger.info("CHECK BEFORE ANY LOGIC");
         logger.info(drone.getHeading());
         //if(backLogAction != null){
         if(!decisionQ.isEmpty()){
-            return;
+            return false;
             //enqueues the action from the backLog to the decision we want to happen next
             //decisionQ.add(backLogAction.remove());
         } 
@@ -368,6 +349,7 @@ public class Controller {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(createCommand("echo", "right"));
             }
+            return false;
         } else if (!isXMappingDone) {
             
             if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
@@ -381,6 +363,7 @@ public class Controller {
                 decisionQ.add(createCommand("echo", "right"));
                 x_len++;
             }
+            return false;
         } else if (!isYMappingStarted) {
             if (extraInfo.get("found").equals("GROUND")) {
                 isYMappingStarted = true;
@@ -388,6 +371,7 @@ public class Controller {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(createCommand("echo", "right"));
             }
+            return false;
         } else if (!isYMappingDone) {
             if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
                 isYMappingDone = true;
@@ -396,6 +380,7 @@ public class Controller {
                 decisionQ.add(createCommand("echo", "right"));
                 y_len++;
             }
+            return false;
         } else if (!isInitialCorrectionDone) {
             decisionQ.add(createCommand("heading", "right"));
             drone.changeHeading(false);
@@ -410,15 +395,71 @@ public class Controller {
             x_len--;
             y_len--;
             isInitialCorrectionDone = true;
+            return false;
         } else {
-            decisionQ.add(commands.get("stop"));
+            //decisionQ.add(commands.get("stop"));
+            return true;
+
         }
+    }
+    public void goToGroundDecisions() {
+        
+        
+        if (y_len != 0) {
+            for(int i = 0; i < y_len/2; i++){
+                decisionQ.add(commands.get("fly"));
+            }
+        
+            logger.info("GOING TO GROUND IN RANGE: " + y_len);
+        
+            decisionQ.add(commands.get("scan"));
+            
+            
+
+            
+            goToGroundStarted = true;
+        }
+        
+        //decisionQ.add(commands.get("scan"));
+            
+        //decisionQ.add(commands.get("stop"));
+        
+        
+            
+        
+    
+        
+        
+    }
+
+    public void zigZagAlgorithm() {
+        //addisons code here
+
+        
     }
     
     public JSONObject bruteForceDecisionResult(){
         if (decisionQ.isEmpty()) {
             bruteForceDecision();
         } 
+        else if (goToGroundStarted && extraInfo != null) {
+            logger.info("BIOME: " + (analyzeScan()).toString());
+            if (analyzeScan() == TileValue.OCEAN ) {
+                decisionQ.add(createCommand("heading", "left"));
+                drone.changeHeading(true);
+                getRespectiveDirections();
+                adjustingAtGround = true;
+            }
+            else {
+                
+                decisionQ.add(commands.get("scan"));
+                decisionQ.add(commands.get("stop"));
+
+            } 
+            
+            
+
+        }
         logger.info(decisionQ.peek());
         return decisionQ.remove();
     }
