@@ -58,19 +58,19 @@ public class Explorer implements IExplorerRaid {
             i++;
         }
 
-        else if (i < 42) {
+        else if (i < 50) {
             decision = controller.commands.get("fly");
             i++;
         }
 
-        else if(i==42){
+        else if(i==50){
             decision = controller.commands.get("scan");
             logger.info("JUST scanned here");
             i++;
         }
 
 
-        else if(i<500){
+        else if(i<460){
             controller.bruteForceDecision();
             decision = controller.bruteForceDecisionResult();
             
@@ -121,11 +121,7 @@ public class Explorer implements IExplorerRaid {
         
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
-        logger.info("Current decision: {}", decision);
-        if (i > 42 && extraInfo.has("range") && extraInfo.has("found") && decision.get("action").equals("echo")) {
-            controller.analyzeEcho();
-            logger.info("going in here");
-        }
+        
         //updates the battery level of the drone
         controller.updateDrone();
     }

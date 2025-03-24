@@ -428,10 +428,14 @@ public class Controller {
     }
 
     public void findCreek(){
-        if(extraInfo != null && extraInfo.has("creeks")){
-            JSONArray creekKey = extraInfo.getJSONArray("creeks");
-            logger.info(creekKey.toString());
-            this.creek = creekKey.toString();
+        if(extraInfo.has("biomes") && extraInfo.has("creeks")){
+            JSONArray temp = extraInfo.getJSONArray("creeks");
+            if(temp.length()>0){
+                this.creek = temp.getString(0);
+                logger.info("IN HERE");
+                logger.info(creek);    
+            }
+            logger.info(temp.length() == 0);
         }
     }
 
@@ -449,9 +453,16 @@ public class Controller {
         //if two items are added to the Queue one after another we won't be able to properly depict which action happens when
         //the backLogAction ensures that the next decision made will be off of the correct action
 
-        logger.info("CHECK BEFORE ANY LOGIC");
-        logger.info(drone.getHeading());
-        //if(backLogAction != null){
+        // if(extraInfo.has("biomes") && extraInfo.has("creeks")){
+        //     JSONArray temp = extraInfo.getJSONArray("creeks");
+        //     if(temp.length()>0){
+        //         this.creek = temp.getString(0);
+        //         logger.info("IN HERE");
+        //         logger.info(creek);    
+        //     }
+        //     logger.info(temp.length() == 0);
+        // }
+
         if(!decisionQ.isEmpty()){
             return;
             //enqueues the action from the backLog to the decision we want to happen next
@@ -510,7 +521,7 @@ public class Controller {
         //queue has no commands in it then pass in a fly and echo command together
         else {
 
-            //findCreek();
+            findCreek();
             logger.info(this.creek);
 
             decisionQ.add(commands.get("fly"));
