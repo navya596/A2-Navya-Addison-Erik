@@ -77,10 +77,10 @@ public class Explorer implements IExplorerRaid {
             i++;
         }
 
-        else{
-            decision = controller.commands.get("stop");
-            logger.info("STOP in explore ");
-        }
+        // else{
+        //     decision = controller.commands.get("stop");
+        //     logger.info("STOP in explore ");
+        // }
 
         // else if (i == 38) {
         //     decision = controller.commands.get("scan").toString();

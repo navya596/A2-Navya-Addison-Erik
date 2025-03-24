@@ -171,115 +171,6 @@ public class Controller {
         
     }
 
-    /*public void goToGroundDecisions() {
-
-        //add a null check for extra info before accessing it 
-        //be consistent with using opt safely to access json values and prevent exceptions
-        //add null check for creeks array???
-        //logic for out of range??
-        if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
-            getRespectiveDirections();
-            int range = (int) extraInfo.get("range");
-            if (range != 0) {
-                //enqueue fly to ground based on range
-                for(int i = 0; i < range; i++){
-                    decisionQ.add(commands.get("fly"));
-                }
-
-                logger.info("GOING TO GROUND IN RANGE: " + range);
-
-                
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
-            }
-            else {
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
-            }
-            
-            
-            
-        } else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
-            //*********if out of range we might wanna echo left or right of current heading
-
-            //echo left
-            //echo right
-        }
-        else if (extraInfo != null && extraInfo.has("biomes") && extraInfo.has("creeks")) { //else if extra info has a key called biomes and creeks 
-            Object creeksObj = extraInfo.opt("creeks");  // Use opt() to avoid exceptions
-            Object biomesObj = extraInfo.opt("biomes");
-
-            JSONArray creeksArray = null;
-            JSONArray biomesArray = null;
-
-            if (creeksObj instanceof JSONArray) {
-                creeksArray = (JSONArray) creeksObj;
-            }
-            if (biomesObj instanceof JSONArray) {
-                biomesArray = (JSONArray) biomesObj;
-            }
-
-            
-            if (biomesArray != null) {  
-
-                // Check if biomes contains "OCEAN"
-                boolean containsOcean = false;
-                for (int i = 0; i < biomesArray.length(); i++) {  
-                    if ("OCEAN".equals(biomesArray.getString(i))) {  
-                        containsOcean = true;  
-                        break;  
-                    }  
-                }
-        
-                if (creeksArray.length() > 0) {  
-                    decisionQ.add(commands.get("stop"));  
-                    logger.info("STOP 3");
-                }  
-                else if (biomesArray.length() == 1 && containsOcean) {  
-                    decisionQ.add(createCommand("echo", "left"));   //handle out of range in above if state ment
-                }  
-                else if (biomesArray.length() != 1 && containsOcean) {  
-                    decisionQ.add(commands.get("fly"));  
-                    decisionQ.add(commands.get("scan"));
-                    
-                    
-                }  
-                else {  
-                    decisionQ.add(createCommand("heading", "right"));  
-                    decisionQ.add(commands.get("fly"));  
-                    decisionQ.add(commands.get("scan"));
-
-                    
-                } 
-
-                
-                
-            }  
-
-            //decisionQ.add(commands.get("scan"));
-            //decisionQ.add(commands.get("stop"));
-        }
-
-    }
-
-    public String goToGround() {
-        if (extraInfo != null) {
-            logger.info("Extra info: " + extraInfo);
-        } else {
-            logger.info("Extra info is null");
-        }
-        
-        if (!decisionQ.isEmpty()) {
-            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
-            JSONObject groundDecision = decisionQ.remove();
-            getRespectiveDirections();
-            return groundDecision.toString();
-        }
-        else {     
-            return "reachedGround";
-        }
-    } */
-
     public void analyzeEcho() {
         
         int range = extraInfo.getInt("range");
@@ -404,16 +295,6 @@ public class Controller {
         //if two items are added to the Queue one after another we won't be able to properly depict which action happens when
         //the backLogAction ensures that the next decision made will be off of the correct action
 
-        // if(extraInfo.has("biomes") && extraInfo.has("creeks")){
-        //     JSONArray temp = extraInfo.getJSONArray("creeks");
-        //     if(temp.length()>0){
-        //         this.creek = temp.getString(0);
-        //         logger.info("IN HERE");
-        //         logger.info(creek);    
-        //     }
-        //     logger.info(temp.length() == 0);
-        // }
-
         if(!decisionQ.isEmpty()){
             return;
             //enqueues the action from the backLog to the decision we want to happen next
@@ -427,7 +308,6 @@ public class Controller {
             //since echo is going to be called after the u-turn
             //if the echo range is 0 that means the tile in front of us is still ground so we can call fly and scan
             if(range == 0 && found.equals("GROUND")){
-                logger.info("WAS CALLED WHEN GROUND and range == 0");
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(commands.get("scan"));
             } else if (found.equals("GROUND") && range > 0){
@@ -480,7 +360,12 @@ public class Controller {
             decisionQ.add(commands.get("scan"));
             logger.info("flew and scanned here");
         }
-        
+    }
+
+    public void checkBatteryLife(){
+        if(drone.getBatteryLevel()<30){
+            decisionQ.add(commands.get("stop"));
+        }
     }
 
     public JSONObject bruteForceDecisionResult(){
@@ -488,18 +373,6 @@ public class Controller {
         logger.info(decisionQ.peek());
         return decisionQ.remove();
     }
-
-    
-    
-
-    //if creek is NOT found
-        //if ocean only
-            //turn left
-            //go in
-            //turn right
-            //
-    //else creek is found
-        //stop mission
 
     public void updateDrone(){
         //updates battery after a decision is made
