@@ -342,6 +342,14 @@ public class Controller {
             return false;
         }
     }
+
+    public boolean wasScanCalled(){
+        if(extraInfo.has("biomes")){
+            return true;
+        } else{
+            return false;
+        }
+    }
     private boolean isXMappingStarted = false;
     private boolean isXMappingDone = false;
     private boolean isYMappingStarted = false;
@@ -407,7 +415,7 @@ public class Controller {
             drone.changeHeading(false);
             getRespectiveDirections();
             decisionQ.add(commands.get("fly"));
-            decisionQ.add(commands.get("scan"));
+            decisionQ.add(createCommand("echo", "front"));
             
             //corrects the x and y lengths of island (algorithm counts one extra time)
             x_len--;
@@ -416,6 +424,8 @@ public class Controller {
             xCoord = x_len;
             yCoord = y_len;
             isInitialCorrectionDone = true;
+
+        
         } else if (isTraversingUp && xCoord >= 0) {
             if (yCoord == 1) {
                 decisionQ.add(createCommand("heading", "left"));
@@ -424,12 +434,34 @@ public class Controller {
                 decisionQ.add(createCommand("heading", "left"));
                 drone.changeHeading(true);
                 getRespectiveDirections();
-                decisionQ.add(commands.get("scan"));
+                decisionQ.add(createCommand("echo", "front"));
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
-            } else {
+            } else if (wasEchoCalled()) {
+                for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
+                    decisionQ.add(commands.get("fly"));
+                    yCoord--;
+                }
+                decisionQ.add(commands.get("scan"));
+            } else if (wasScanCalled()) {
+                if (analyzeScan() == TileValue.OCEAN) {
+                    while (yCoord > 1) {
+                        decisionQ.add(commands.get("fly"));
+                        yCoord--;
+                    }
+                } else {
+                    decisionQ.add(commands.get("fly"));
+                    decisionQ.add(commands.get("scan"));
+                
+                    yCoord--;
+                }
+            }
+            
+            
+            else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(commands.get("scan"));
+                
                 yCoord--;
             }
         } else if (!isTraversingUp && xCoord >= 0) {
@@ -440,12 +472,32 @@ public class Controller {
                 decisionQ.add(createCommand("heading", "right"));
                 drone.changeHeading(false);
                 getRespectiveDirections();
-                decisionQ.add(commands.get("scan"));
+                decisionQ.add(createCommand("echo", "front"));
                 isTraversingUp = !isTraversingUp;
                 xCoord = xCoord - 2;
-            } else {
+            } else if (wasEchoCalled()) {
+                for (int i = 0; i < extraInfo.getInt("range")+1; i++) {
+                    decisionQ.add(commands.get("fly"));
+                    yCoord++;
+                }
+                decisionQ.add(commands.get("scan"));
+            } else if (wasScanCalled()) {
+                if (analyzeScan() == TileValue.OCEAN) {
+                    while (yCoord < y_len) {
+                        decisionQ.add(commands.get("fly"));
+                        yCoord++;
+                    }
+                } else {
+                    decisionQ.add(commands.get("fly"));
+                    decisionQ.add(commands.get("scan"));
+                
+                    yCoord++;
+                }
+            }
+            else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(commands.get("scan"));
+                
                 yCoord++;
             }
         }        
