@@ -347,8 +347,11 @@ public class Controller {
     private boolean isYMappingStarted = false;
     private boolean isYMappingDone = false;
     private boolean isInitialCorrectionDone = false;
+    private boolean isTraversingUp = true;
     private int x_len = 0;
     private int y_len = 0;
+    private int xCoord;
+    private int yCoord;
 
 
     public void bruteForceDecision(){
@@ -409,8 +412,44 @@ public class Controller {
             //corrects the x and y lengths of island (algorithm counts one extra time)
             x_len--;
             y_len--;
+
+            xCoord = x_len;
+            yCoord = y_len;
             isInitialCorrectionDone = true;
-        } else {
+        } else if (isTraversingUp && xCoord >= 0) {
+            if (yCoord == 1) {
+                decisionQ.add(createCommand("heading", "left"));
+                drone.changeHeading(true);
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "left"));
+                drone.changeHeading(true);
+                getRespectiveDirections();
+                decisionQ.add(commands.get("scan"));
+                isTraversingUp = !isTraversingUp;
+                xCoord = xCoord - 2;
+            } else {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(commands.get("scan"));
+                yCoord--;
+            }
+        } else if (!isTraversingUp && xCoord >= 0) {
+            if (yCoord == y_len) {
+                decisionQ.add(createCommand("heading", "right"));
+                drone.changeHeading(false);
+                getRespectiveDirections();
+                decisionQ.add(createCommand("heading", "right"));
+                drone.changeHeading(false);
+                getRespectiveDirections();
+                decisionQ.add(commands.get("scan"));
+                isTraversingUp = !isTraversingUp;
+                xCoord = xCoord - 2;
+            } else {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(commands.get("scan"));
+                yCoord++;
+            }
+        }        
+        else {
             decisionQ.add(commands.get("stop"));
         }
     }
