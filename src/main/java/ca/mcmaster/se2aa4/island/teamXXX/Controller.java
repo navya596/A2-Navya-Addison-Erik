@@ -187,33 +187,36 @@ public class Controller {
 
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
-    public void findGroundDecisions(){
-
-        getRespectiveDirections();
-        //fly east 15 times
-        for(int i = 0; i < 15; i++){
-            decisionQ.add(commands.get("fly"));
+    public boolean findGroundDecisions(){
+        //If past result was echo, and ground was found, return true to explorer
+        if (extraInfo != null && extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
+            return true;
         }
+        //Else fly twice and echo right to look for ground
+        else {
+            getRespectiveDirections();
+            //fly east 2 times
+            for(int i = 0; i < 2; i++){
+                decisionQ.add(commands.get("fly"));
+            }
 
-        logger.info("CHECKING HERE {}", right);
-        decisionQ.add(commands.get("scan"));
+            logger.info("CHECKING HERE {}", right);
 
-        //turn towards the south
-        decisionQ.add(createCommand("heading", "right"));
-        decisionQ.add(commands.get("scan"));
-
-        //echo south for a ground tile
-        decisionQ.add(createCommand("echo", "right"));
+            //echo south for a ground tile
+            decisionQ.add(createCommand("echo", "right"));
+            return false; //return false as ground was not found
+        }
     }
 
-    public String executeFindGroundDecisions(){
+    //empties queue for ground decisions
+    public JSONObject executeFindGroundDecisions(){
         if (!decisionQ.isEmpty()) {
             //Check if the drone batterylevel is decreasing after each updateDrone() call
             logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
 
             JSONObject decision = decisionQ.remove();
 
-            //once we get to the heading decision it needs to change the heading of the drone accordingly
+            /*//once we get to the heading decision it needs to change the heading of the drone accordingly
             getRespectiveDirections();
             if((decision.get("action")).equals("heading")){
             
@@ -221,22 +224,22 @@ public class Controller {
                 drone.setHeading(newDirection);
             }
 
-            //check if the direction was changed
-            logger.info("New heading of the drone is {}", drone.getHeading());
+            //check if the direction was changed 
+            logger.info("New heading of the drone is {}", drone.getHeading()); */
 
-            return decision.toString();
+            return decision;
         }
         else { //means queue is empty, all steps have been performed
             //go back to explore class
             
 
-            return "queue empty";
+            return null;
         }
         
     }
 
-    /*public void goToGroundDecisions() {
-
+    public void goToGroundDecisions() {
+        //MUST TURN FIRST
         //add a null check for extra info before accessing it 
         //be consistent with using opt safely to access json values and prevent exceptions
         //add null check for creeks array???
@@ -342,7 +345,7 @@ public class Controller {
         else {     
             return "reachedGround";
         }
-    } */
+    } 
 
     public void analyzeEcho() {
         

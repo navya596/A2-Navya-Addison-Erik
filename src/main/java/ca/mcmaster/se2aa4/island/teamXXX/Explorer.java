@@ -19,6 +19,7 @@ public class Explorer implements IExplorerRaid {
     private int cost;
     private String status;
     private JSONObject extraInfo;
+    private boolean foundGround = false;
     private int i = 0;
 
     @Override
@@ -41,7 +42,33 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
+        //findground
+        foundGround = controller.findGroundDecisions();
+        decision = controller.executeFindGroundDecisions();
+        if (foundGround) {
+            logger.info("Found ground ");
+            decision = controller.commands.get("stop");
+            //go to ground
+            //do brute search
+        } else if (!foundGround) {
+            //execute search if found ground was not true
+            decision = controller.executeFindGroundDecisions();
+        }
+        else if (decision == null) { //queue is empty
+            logger.info("Queue empty, looking for ground again ");
+            decision = controller.executeFindGroundDecisions(); //start looking for ground again
+            
+        }
+        else {
+            decision = controller.commands.get("stop");
+            logger.info("STOP in explore ");
+            
+        }
 
+        //gotoground
+        //scan
+        //brute search
+        /* 
         if (i < 20) {
             decision = controller.commands.get("fly");
             i++;
@@ -75,12 +102,9 @@ public class Explorer implements IExplorerRaid {
             decision = controller.bruteForceDecisionResult();
             
             i++;
-        }
+        } */
 
-        else{
-            decision = controller.commands.get("stop");
-            logger.info("STOP in explore ");
-        }
+        
 
         // else if (i == 38) {
         //     decision = controller.commands.get("scan").toString();
