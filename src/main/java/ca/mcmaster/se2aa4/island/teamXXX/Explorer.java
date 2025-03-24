@@ -20,6 +20,8 @@ public class Explorer implements IExplorerRaid {
     private String status;
     private JSONObject extraInfo;
     private boolean foundGround = false;
+    private boolean goingToGround = false;
+    private boolean reachedGround = false;
     private int i = 0;
 
     @Override
@@ -37,33 +39,45 @@ public class Explorer implements IExplorerRaid {
         
 
         //for now it will execute the steps provided from findGroundDecisions
-        //controller.findGroundDecisions();
+        foundGround = controller.findGroundDecisions();
     }
 
     @Override
     public String takeDecision() {
-        //findground
-        foundGround = controller.findGroundDecisions();
-        decision = controller.executeFindGroundDecisions();
-        if (foundGround) {
-            logger.info("Found ground ");
-            decision = controller.commands.get("stop");
-            //go to ground
-            //do brute search
-        } else if (!foundGround) {
-            //execute search if found ground was not true
+        logger.info("original decision: " + (decision != null ? decision.toString() : "null"));
+        //if found ground is true and the queue is empty
+        if (foundGround && !goingToGround) { // Ensure we only execute this once
+            logger.info("Found ground, starting goToGroundDecisions()");
+            int range = (int) extraInfo.get("range");
+            controller.goToGroundDecisions();
+            goingToGround = true; // Mark that we've started going to ground
+        } 
+        // If already going to ground, execute goToGroundDecisions()
+        if (foundGround && goingToGround) {
+            decision = controller.executeGoToGroundDecisions();
+        } else {
+            //dequeue
             decision = controller.executeFindGroundDecisions();
-        }
-        else if (decision == null) { //queue is empty
-            logger.info("Queue empty, looking for ground again ");
-            decision = controller.executeFindGroundDecisions(); //start looking for ground again
+            //findground
+            if (decision == null) {
+                foundGround = controller.findGroundDecisions();
+                decision = controller.executeFindGroundDecisions();
+            }
             
         }
-        else {
-            decision = controller.commands.get("stop");
-            logger.info("STOP in explore ");
-            
-        }
+        
+        
+        
+        
+        
+
+        
+        // controller.executeFindGroundDecisions();
+        // if (decision.equals("queue empty")) { //means ground has been found and queue is empty
+        //     //must enqueue decisions to go to ground
+        //     controller.goToGroundDecisions();
+        //     decision = controller.executeFindGroundDecisions();
+        // }
 
         //gotoground
         //scan
@@ -119,12 +133,6 @@ public class Explorer implements IExplorerRaid {
         // }
         
         
-        // controller.executeFindGroundDecisions();
-        // if (decision.equals("queue empty")) { //means ground has been found and queue is empty
-        //     //must enqueue decisions to go to ground
-        //     controller.goToGroundDecisions();
-        //     decision = controller.executeFindGroundDecisions();
-        // }
         
 
         

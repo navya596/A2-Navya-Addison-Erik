@@ -188,13 +188,17 @@ public class Controller {
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
     public boolean findGroundDecisions(){
+        getRespectiveDirections();
         //If past result was echo, and ground was found, return true to explorer
         if (extraInfo != null && extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
+            logger.info("ADDED HEADING HERE");
+            decisionQ.add(createCommand("heading", "right"));
+            
             return true;
         }
         //Else fly twice and echo right to look for ground
         else {
-            getRespectiveDirections();
+            
             //fly east 2 times
             for(int i = 0; i < 2; i++){
                 decisionQ.add(commands.get("fly"));
@@ -216,7 +220,7 @@ public class Controller {
 
             JSONObject decision = decisionQ.remove();
 
-            /*//once we get to the heading decision it needs to change the heading of the drone accordingly
+            //once we get to the heading decision it needs to change the heading of the drone accordingly
             getRespectiveDirections();
             if((decision.get("action")).equals("heading")){
             
@@ -225,7 +229,54 @@ public class Controller {
             }
 
             //check if the direction was changed 
-            logger.info("New heading of the drone is {}", drone.getHeading()); */
+            logger.info("New heading of the drone is {}", drone.getHeading()); 
+
+            return decision;
+        }
+        
+        return null;
+    }
+
+    public void goToGroundDecisions() {
+        
+        getRespectiveDirections();
+
+        int range = (int) extraInfo.get("range");
+        if (range != 0) {
+            //enqueue fly to ground based on range
+            for(int i = 0; i < range; i++){
+                decisionQ.add(commands.get("fly"));
+            }
+
+            logger.info("GOING TO GROUND IN RANGE: " + range);
+
+            
+        }
+        decisionQ.add(commands.get("scan"));
+        
+        decisionQ.add(commands.get("stop"));
+        
+        
+    }
+
+    //empties queue for ground decisions
+    public JSONObject executeGoToGroundDecisions(){
+        if (!decisionQ.isEmpty()) {
+            //Check if the drone batterylevel is decreasing after each updateDrone() call
+            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
+
+            JSONObject decision = decisionQ.remove();
+
+            //once we get to the heading decision it needs to change the heading of the drone accordingly
+            getRespectiveDirections();
+            if((decision.get("action")).equals("heading")){
+            
+                String newDirection = decision.getJSONObject("parameters").getString("direction");
+                drone.setHeading(newDirection);
+            }
+
+            //check if the direction was changed 
+            logger.info("New heading of the drone is {}", drone.getHeading()); 
 
             return decision;
         }
@@ -237,115 +288,6 @@ public class Controller {
         }
         
     }
-
-    public void goToGroundDecisions() {
-        //MUST TURN FIRST
-        //add a null check for extra info before accessing it 
-        //be consistent with using opt safely to access json values and prevent exceptions
-        //add null check for creeks array???
-        //logic for out of range??
-        if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
-            getRespectiveDirections();
-            int range = (int) extraInfo.get("range");
-            if (range != 0) {
-                //enqueue fly to ground based on range
-                for(int i = 0; i < range; i++){
-                    decisionQ.add(commands.get("fly"));
-                }
-
-                logger.info("GOING TO GROUND IN RANGE: " + range);
-
-                
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
-            }
-            else {
-                decisionQ.add(createCommand("heading", "left"));
-                decisionQ.add(commands.get("scan"));
-            }
-            
-            
-            
-        } else if (extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("OUT_OF_RANGE")) {
-            //*********if out of range we might wanna echo left or right of current heading
-
-            //echo left
-            //echo right
-        }
-        else if (extraInfo != null && extraInfo.has("biomes") && extraInfo.has("creeks")) { //else if extra info has a key called biomes and creeks 
-            Object creeksObj = extraInfo.opt("creeks");  // Use opt() to avoid exceptions
-            Object biomesObj = extraInfo.opt("biomes");
-
-            JSONArray creeksArray = null;
-            JSONArray biomesArray = null;
-
-            if (creeksObj instanceof JSONArray) {
-                creeksArray = (JSONArray) creeksObj;
-            }
-            if (biomesObj instanceof JSONArray) {
-                biomesArray = (JSONArray) biomesObj;
-            }
-
-            
-            if (biomesArray != null) {  
-
-                // Check if biomes contains "OCEAN"
-                boolean containsOcean = false;
-                for (int i = 0; i < biomesArray.length(); i++) {  
-                    if ("OCEAN".equals(biomesArray.getString(i))) {  
-                        containsOcean = true;  
-                        break;  
-                    }  
-                }
-        
-                if (creeksArray.length() > 0) {  
-                    decisionQ.add(commands.get("stop"));  
-                    logger.info("STOP 3");
-                }  
-                else if (biomesArray.length() == 1 && containsOcean) {  
-                    decisionQ.add(createCommand("echo", "left"));   //handle out of range in above if state ment
-                }  
-                else if (biomesArray.length() != 1 && containsOcean) {  
-                    decisionQ.add(commands.get("fly"));  
-                    decisionQ.add(commands.get("scan"));
-                    
-                    
-                }  
-                else {  
-                    decisionQ.add(createCommand("heading", "right"));  
-                    decisionQ.add(commands.get("fly"));  
-                    decisionQ.add(commands.get("scan"));
-
-                    
-                } 
-
-                
-                
-            }  
-
-            //decisionQ.add(commands.get("scan"));
-            //decisionQ.add(commands.get("stop"));
-        }
-
-    }
-
-    public String goToGround() {
-        if (extraInfo != null) {
-            logger.info("Extra info: " + extraInfo);
-        } else {
-            logger.info("Extra info is null");
-        }
-        
-        if (!decisionQ.isEmpty()) {
-            logger.info("BATTERY LEVEL {}", drone.getBatteryLevel());
-            JSONObject groundDecision = decisionQ.remove();
-            getRespectiveDirections();
-            return groundDecision.toString();
-        }
-        else {     
-            return "reachedGround";
-        }
-    } 
 
     public void analyzeEcho() {
         
