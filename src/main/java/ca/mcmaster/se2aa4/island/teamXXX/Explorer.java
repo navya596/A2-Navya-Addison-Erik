@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import java.util.List;
-import java.util.ArrayList;
 
 import eu.ace_design.island.bot.IExplorerRaid;
 
@@ -20,7 +19,6 @@ public class Explorer implements IExplorerRaid {
     private int cost;
     private String status;
     private JSONObject extraInfo;
-    private int i = 0;
 
     @Override
     public void initialize(String s) {
