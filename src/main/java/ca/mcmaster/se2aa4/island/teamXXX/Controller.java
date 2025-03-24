@@ -193,7 +193,7 @@ public class Controller {
         if (extraInfo != null && extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
             logger.info("ADDED HEADING HERE");
             decisionQ.add(createCommand("heading", "right"));
-            
+            //decisionQ.add(createCommand("echo", "front"));
             return true;
         }
         //Else fly twice and echo right to look for ground
@@ -239,6 +239,7 @@ public class Controller {
 
     public void goToGroundDecisions() {
         
+
         getRespectiveDirections();
 
         int range = (int) extraInfo.get("range");
@@ -250,11 +251,11 @@ public class Controller {
 
             logger.info("GOING TO GROUND IN RANGE: " + range);
 
-            
+            decisionQ.add(commands.get("scan"));
+    
+            //decisionQ.add(commands.get("stop"));
         }
-        decisionQ.add(commands.get("scan"));
-        
-        decisionQ.add(commands.get("stop"));
+    
         
         
     }

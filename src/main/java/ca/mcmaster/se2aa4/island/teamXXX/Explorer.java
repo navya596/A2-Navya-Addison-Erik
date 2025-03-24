@@ -21,7 +21,7 @@ public class Explorer implements IExplorerRaid {
     private JSONObject extraInfo;
     private boolean foundGround = false;
     private boolean goingToGround = false;
-    private boolean reachedGround = false;
+    private boolean startedBruteForce = false;
     private int i = 0;
 
     @Override
@@ -44,27 +44,41 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String takeDecision() {
-        logger.info("original decision: " + (decision != null ? decision.toString() : "null"));
+        if (!foundGround && !goingToGround) {
+            decision = controller.executeFindGroundDecisions();
+        }
+        if (decision == null) {
+            foundGround = controller.findGroundDecisions();
+            decision = controller.executeFindGroundDecisions();
+        }
         //if found ground is true and the queue is empty
         if (foundGround && !goingToGround) { // Ensure we only execute this once
             logger.info("Found ground, starting goToGroundDecisions()");
-            int range = (int) extraInfo.get("range");
             controller.goToGroundDecisions();
             goingToGround = true; // Mark that we've started going to ground
         } 
         // If already going to ground, execute goToGroundDecisions()
-        if (foundGround && goingToGround) {
-            decision = controller.executeGoToGroundDecisions();
-        } else {
-            //dequeue
-            decision = controller.executeFindGroundDecisions();
-            //findground
-            if (decision == null) {
-                foundGround = controller.findGroundDecisions();
-                decision = controller.executeFindGroundDecisions();
+        else if (foundGround && goingToGround) {
+            if (!startedBruteForce) {
+                // Execute the ground decision logic and trigger brute force if needed
+                decision = controller.executeGoToGroundDecisions();
+        
+                if (decision == null) {
+                    controller.bruteForceDecision();
+                    startedBruteForce = true;
+                }
+            } else {
+                // Handle brute force result or continue brute force
+                decision = controller.bruteForceDecisionResult();
+                if (decision == null) {
+                    controller.bruteForceDecision();
+                }
             }
-            
         }
+        
+        
+
+        
         
         
         
@@ -154,10 +168,7 @@ public class Explorer implements IExplorerRaid {
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
         logger.info("Current decision: {}", decision);
-        if (i > 42 && extraInfo.has("range") && extraInfo.has("found") && decision.get("action").equals("echo")) {
-            controller.analyzeEcho();
-            logger.info("going in here");
-        }
+        
         //updates the battery level of the drone
         controller.updateDrone();
     }
