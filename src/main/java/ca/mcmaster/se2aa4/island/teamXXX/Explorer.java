@@ -12,7 +12,6 @@ import eu.ace_design.island.bot.IExplorerRaid;
 public class Explorer implements IExplorerRaid {
 
     private final Logger logger = LogManager.getLogger();
-    private int testCounter;
     private Controller controller;
     private JSONObject decision;
     private JSONObject response;
@@ -33,77 +32,22 @@ public class Explorer implements IExplorerRaid {
     
         //Initialize the Controller object
         this.controller = new Controller(new Drone(batteryLevel, direction));
-        
 
-        //for now it will execute the steps provided from findGroundDecisions
-        //controller.findGroundDecisions();
+        //Since we have not made a decision yet at the start this is called to initialize the attributes in controller
+        controller.resultOfDecision(0, "", new JSONObject());
+
     }
 
     @Override
     public String takeDecision() {
-
-        if (i < 20) {
-            decision = controller.commands.get("fly");
-            i++;
-        }
-        
-        else if (i == 20) {
-            decision = controller.createCommand("echo", "right");
-            i++;
-        }
-
-        else if (i == 21){
-            decision = controller.createCommand("heading", "right");
-            controller.drone.setHeading("S");
-            i++;
-        }
-
-        else if (i < 50) {
-            decision = controller.commands.get("fly");
-            i++;
-        }
-
-        else if(i==50){
-            decision = controller.commands.get("scan");
-            logger.info("JUST scanned here");
-            i++;
-        }
-
-
-        else if(i<460){
+        if(controller.isIslandFound()){
             controller.bruteForceDecision();
-            decision = controller.bruteForceDecisionResult();
-            
-            i++;
+        } else {
+            controller.goToIsland();
         }
 
-        // else{
-        //     decision = controller.commands.get("stop");
-        //     logger.info("STOP in explore ");
-        // }
-
-        // else if (i == 38) {
-        //     decision = controller.commands.get("scan").toString();
-        //     i++;
-        // }
-
-        // else if (i > 37 && i != 200) {
-        //     decision = controller.traverseCoast().toString();
-        //     i++;
-        // } else if (i == 200) {
-        //     decision = controller.commands.get("stop").toString();
-        // }
-        
-        
-        // controller.executeFindGroundDecisions();
-        // if (decision.equals("queue empty")) { //means ground has been found and queue is empty
-        //     //must enqueue decisions to go to ground
-        //     controller.goToGroundDecisions();
-        //     decision = controller.executeFindGroundDecisions();
-        // }
-        
-
-        
+        decision = controller.getActionMade();
+    
         return decision.toString();
 
     }
@@ -130,8 +74,8 @@ public class Explorer implements IExplorerRaid {
     public String deliverFinalReport() {
         String creek = controller.getCreek();
         String site = controller.getSite();
-        logger.info(creek);
-        logger.info(site);
+        logger.info("Creek found {}", creek);
+        logger.info("Site found {}", site);
 
         return creek;
     }

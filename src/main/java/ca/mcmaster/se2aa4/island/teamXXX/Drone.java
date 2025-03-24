@@ -38,12 +38,7 @@ public class Drone {
 
     //Decrease battery level
     public void decreaseBattery (Integer amount) {
-        if (battery_level - amount >= 0) {
-            battery_level-=amount;
-
-        } else {
-            battery_level = 0; 
-        }
+        battery_level -= amount;
         //we can return some sort of value here to indicate if battery gets full drained
     }
 
@@ -60,18 +55,5 @@ public class Drone {
             else if (heading == "W") heading = "N";
             else if (heading == "N") heading = "E";
         }
-    }
-
-    //primitive move forward
-    public void move() {
-        // if (heading == Direction.EAST) {
-        //     x_coord++;
-        // } else if (heading == Direction.SOUTH) {
-        //     y_coord++;
-        // } else if (heading == Direction.WEST) {
-        //     x_coord--;
-        // } else if (heading == Direction.NORTH) {
-        //     y_coord--;
-        // }
     }
 }
