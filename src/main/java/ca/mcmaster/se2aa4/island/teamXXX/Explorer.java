@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import java.util.List;
+import java.util.ArrayList;
 
 import eu.ace_design.island.bot.IExplorerRaid;
 
@@ -31,23 +32,16 @@ public class Explorer implements IExplorerRaid {
         logger.info("Battery level is {}", batteryLevel);
     
         //Initialize the Controller object
-        this.controller = new Controller(new Drone(batteryLevel, direction));
-
-        //Since we have not made a decision yet at the start this is called to initialize the attributes in controller
-        controller.resultOfDecision(0, "", new JSONObject());
-
+        Drone drone = new Drone(batteryLevel, direction);
+        this.controller = new Controller(drone);
     }
 
     @Override
     public String takeDecision() {
-        if(controller.isIslandFound()){
-            controller.bruteForceDecision();
-        } else {
-            controller.goToIsland();
-        }
-
-        decision = controller.getActionMade();
-    
+        //controller.scanIsland();
+        decision = controller.scanIslandExecute();
+        
+        
         return decision.toString();
 
     }
@@ -65,6 +59,7 @@ public class Explorer implements IExplorerRaid {
         
         //Pass the result from the decision that was called in takeDecision()
         controller.resultOfDecision(cost, status, extraInfo);
+        logger.info("Current decision: {}", decision);
         
         //updates the battery level of the drone
         controller.updateDrone();
@@ -72,16 +67,23 @@ public class Explorer implements IExplorerRaid {
 
     @Override
     public String deliverFinalReport() {
-        List<String> creek = controller.getCreek();
+        List<String> creeks = controller.getCreeks();
         String site = controller.getSite();
-        for(int i = 0; i<creek.size(); i++){
-            logger.info("Creek found {}", creek.get(i));
-        }
-        
-        logger.info("Site found {}", site);
 
-        //returns the last added creek
-        return creek.remove(creek.size()-1);
+        for(int i = 0; i<creeks.size(); i++){
+            logger.info("CREEK FOUND {}", creeks.get(i));
+        }
+        logger.info("Site found {}", site); 
+
+        if (creeks.isEmpty()){
+            return "no creek found";
+        }
+
+        if(site == null){
+            return "no emergency site found";
+        }
+
+        return creeks.get(creeks.size()-1);
     }
 
 }
