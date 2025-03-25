@@ -113,30 +113,7 @@ public class Controller {
 
     //Following methods below is just to find a ground tile
     //it uses a Queue to store the predetermined decisions to make
-    public boolean findGroundDecisions(){
-        
-        //If past result was echo, and ground was found, return true to explorer
-        if (extraInfo != null && extraInfo.has("range") && extraInfo.has("found") && extraInfo.get("found").equals("GROUND")) {
-            logger.info("ADDED HEADING HERE");
-            decisionQ.add(createCommand("heading", "right"));
-            //decisionQ.add(createCommand("echo", "front"));
-            return true;
-        }
-        //Else fly twice and echo right to look for ground
-        else {
-            
-            //fly east 2 times
-            for(int i = 0; i < 2; i++){
-                decisionQ.add(commands.get("fly"));
-            }
-
-            logger.info("CHECKING HERE {}", right);
-
-            //echo south for a ground tile
-            decisionQ.add(createCommand("echo", "right"));
-            return false; //return false as ground was not found
-        }
-    }
+    
 
     public TileValue analyzeScan() {
         if (extraInfo.has("biomes")) {
@@ -192,7 +169,7 @@ public class Controller {
         }
     }
     
-    public void bruteForceDecision(){
+    public void scanIsland(){
         if(!decisionQ.isEmpty()){
             return;
         } 
@@ -208,14 +185,25 @@ public class Controller {
             return;
         }
 
+
+        //finds Left-most point of Island
         if (!isXMappingStarted) {
-            if (extraInfo.get("found").equals("GROUND")) {
+            //first time run kickstarts the drone
+            if (extraInfo == null) {
+                decisionQ.add(commands.get("fly"));
+                decisionQ.add(createCommand("echo", "right"));
+            }
+            else if (extraInfo.get("found").equals("GROUND")) {
                 isXMappingStarted = true;
+                scanIsland();
             } else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(createCommand("echo", "right"));
             }
-        } else if (!isXMappingDone) {
+        } 
+        
+        //finds Right-most point of Island, finds x length of Island
+        else if (!isXMappingDone) {
             
             if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
                 decisionQ.add(createCommand("heading", "right"));
@@ -228,22 +216,33 @@ public class Controller {
                 decisionQ.add(createCommand("echo", "right"));
                 x_len++;
             }
-        } else if (!isYMappingStarted) {
+        } 
+
+        //finds North-most point of Island
+        else if (!isYMappingStarted) {
             if (extraInfo.get("found").equals("GROUND")) {
                 isYMappingStarted = true;
+                scanIsland();
             }   else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(createCommand("echo", "right"));
             }
-        } else if (!isYMappingDone) {
+        } 
+        
+        //finds South-most point of island
+        else if (!isYMappingDone) {
             if (extraInfo.get("found").equals("OUT_OF_RANGE")) {
                 isYMappingDone = true;
+                scanIsland();
             }  else {
                 decisionQ.add(commands.get("fly"));
                 decisionQ.add(createCommand("echo", "right"));
                 y_len++;
             }
-        } else if (!isInitialCorrectionDone) {
+        } 
+        
+        //moves drone to bottom left most point of island trace
+        else if (!isInitialCorrectionDone) {
             decisionQ.add(createCommand("heading", "right"));
             drone.changeHeading(false);
             
@@ -253,7 +252,7 @@ public class Controller {
             decisionQ.add(commands.get("fly"));
             decisionQ.add(createCommand("echo", "front"));
             
-            //corrects the x and y lengths of island (algorithm counts one extra time)
+            //corrects the x and y lengths of island (algorithm counts one extra time since it stops counting when it encounters no land)
             x_len--;
             y_len--;
 
@@ -344,9 +343,9 @@ public class Controller {
         }
     }
     
-    public JSONObject bruteForceDecisionResult(){
+    public JSONObject scanIslandExecute(){
         if (decisionQ.isEmpty()) {
-            bruteForceDecision();
+            scanIsland();
         } 
         logger.info(decisionQ.peek());
         return decisionQ.remove();

@@ -1,15 +1,14 @@
 package ca.mcmaster.se2aa4.island.teamXXX;
 
+
 public class Drone {
     private Integer battery_level;
     private String heading;
-    protected Position dronePosition;
 
     //Constructor
     public Drone(Integer battery_level, String heading) {
         this.battery_level = battery_level;
         this.heading = heading;
-        this.dronePosition = new Position(1,1);
     }
 
     //Getter for battery level
@@ -20,10 +19,6 @@ public class Drone {
     //Getter for heading
     public String getHeading () {
         return heading;
-    }
-
-    public Position getPosition() {
-        return dronePosition;
     }
 
     //Setter for batter level

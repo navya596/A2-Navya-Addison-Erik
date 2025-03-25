@@ -20,7 +20,6 @@ public class Explorer implements IExplorerRaid {
     private int cost;
     private String status;
     private JSONObject extraInfo;
-    private boolean foundGround = false;
 
     @Override
     public void initialize(String s) {
@@ -33,18 +32,14 @@ public class Explorer implements IExplorerRaid {
         logger.info("Battery level is {}", batteryLevel);
     
         //Initialize the Controller object
-        this.controller = new Controller(new Drone(batteryLevel, direction));
-        
-
-        //for now it will execute the steps provided from findGroundDecisions
-        foundGround = controller.findGroundDecisions();
+        Drone drone = new Drone(batteryLevel, direction);
+        this.controller = new Controller(drone);
     }
 
     @Override
     public String takeDecision() {
-      
-        controller.bruteForceDecision();
-        decision = controller.bruteForceDecisionResult();
+        //controller.scanIsland();
+        decision = controller.scanIslandExecute();
         
         
         return decision.toString();
