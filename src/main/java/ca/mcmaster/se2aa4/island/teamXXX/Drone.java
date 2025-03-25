@@ -58,17 +58,4 @@ public class Drone {
     }
 
     
-
-    //primitive move forward
-    public void move() {
-        // if (heading == Direction.EAST) {
-        //     x_coord++;
-        // } else if (heading == Direction.SOUTH) {
-        //     y_coord++;
-        // } else if (heading == Direction.WEST) {
-        //     x_coord--;
-        // } else if (heading == Direction.NORTH) {
-        //     y_coord--;
-        // }
-    }
 }
